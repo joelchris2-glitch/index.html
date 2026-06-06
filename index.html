@@ -684,6 +684,7 @@ function renderGrid(){
   const nxtP=activeCell?nextEmptyPrimary(activeCell.week,activeCell.day):null;
   const pairActive=activeCell?.slot==='pair';
   const g=document.getElementById('pGrid');g.innerHTML='';
+  
   // View controls bar
   const vcBar=document.createElement('div');
   vcBar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap';
@@ -696,11 +697,14 @@ function renderGrid(){
     <div style="width:1px;height:16px;background:var(--bdr2);margin:0 2px"></div>
     <button onclick="loadProvinceHolidays()" style="padding:4px 11px;border-radius:6px;font-size:10px;border:1px solid rgba(251,113,133,.3);background:rgba(251,113,133,.07);color:#fb7185;cursor:pointer;font-family:'DM Mono',monospace">📅 Load ${cfg.province} Holidays</button>`;
   g.appendChild(vcBar);
+  
   if(cfg.viewMode==='week'){renderWeekView(g,nxtP,vCells);return;}
+  
   const wrap=document.createElement('div');wrap.style.overflowX='auto';
   const tbl=document.createElement('table');tbl.style.cssText='border-collapse:separate;border-spacing:0;width:100%;min-width:540px';
   const thead=document.createElement('thead'),hrow=document.createElement('tr');
   const th0=document.createElement('th');th0.style.cssText=`width:68px;padding:0 0 8px;text-align:left;font-size:8px;letter-spacing:.15em;color:${T5()};text-transform:uppercase;font-weight:400`;hrow.appendChild(th0);
+  
   DAYS.forEach(d=>{
     const th=document.createElement('th');
     const isWk=WEEKEND.includes(d),noPC=NO_PC.includes(d),isAcad=ACADEMIC.includes(d);
@@ -710,12 +714,15 @@ function renderGrid(){
     th.innerHTML=d+sub;hrow.appendChild(th);
   });
   thead.appendChild(hrow);tbl.appendChild(thead);
+  
   const tbody=document.createElement('tbody');
-  WEEKS.forEach(week=>{
+  
+  WEEKS.forEach((week, wi)=>{
     const tr=document.createElement('tr');
     const wlbl=document.createElement('td');wlbl.style.cssText='padding:2px 0;vertical-align:top;padding-top:7px';
     wlbl.innerHTML=`<span style="font-size:8px;color:${T5()};letter-spacing:.1em;text-transform:uppercase">${week}</span>`;tr.appendChild(wlbl);
-    DAYS.forEach(day=>{
+    
+    DAYS.forEach((day, di)=>{
       const td=document.createElement('td');td.style.cssText='padding:2px;vertical-align:top';
       const cell=getCell(week,day);
       const pr=cell.primary?sbId(cell.primary):null;
@@ -737,6 +744,15 @@ function renderGrid(){
       div.style.height=cellH+'px';div.style.minWidth='70px';
       div.style.background=pr?prC+'10':isWk?BG2():BG3();
       div.style.borderColor=hasV?'rgba(248,113,113,.6)':isAP?(prC||'#63cab7'):isNxtP?'rgba(99,202,183,.5)':isWk?BDR2():BDR();
+
+      // --- DATE NUMBER LOGIC ---
+      const cellDt = cellDate(wi, di);
+      const isCurM = cellDt.getMonth() === viewM;
+      const dtEl = document.createElement('div');
+      dtEl.style.cssText = `position:absolute;top:3px;left:5px;font-size:8px;font-family:'DM Mono',monospace;font-weight:600;color:var(--t3);opacity:${isCurM?0.8:0.35}`;
+      dtEl.textContent = cellDt.getDate();
+      div.appendChild(dtEl);
+      // --------------------------
 
       if(pr){
         if(cell.note)div.innerHTML+='<div class="note-dot"></div>';
@@ -776,14 +792,15 @@ function renderGrid(){
         let sub='';
         if(noPC)sub=`<div style="font-size:6px;color:#fb923c90;margin-top:2px;letter-spacing:.04em">no P/C</div>`;
         else if(isAcad)sub=`<div style="font-size:6px;color:#818cf890;margin-top:2px;letter-spacing:.04em">acad</div>`;
-        div.innerHTML=`<div style="font-size:${isNxtP?15:13}px;color:${col};line-height:1;margin-top:8px">${ico}</div>${sub}`;
+        div.innerHTML+=`<div style="font-size:${isNxtP?15:13}px;color:${col};line-height:1;margin-top:6px">${ico}</div>${sub}`;
       }
 
-      if(hasV){const dot=document.createElement('div');dot.style.cssText='position:absolute;top:3px;left:4px;width:5px;height:5px;border-radius:50%;background:#f87171';div.appendChild(dot);}
+      if(hasV){const dot=document.createElement('div');dot.style.cssText='position:absolute;top:4px;left:16px;width:5px;height:5px;border-radius:50%;background:#f87171';div.appendChild(dot);}
 
       div.addEventListener('dragover',e=>{e.preventDefault();div.style.background=isDark?'#0d1e35':'#e8f4ff';div.style.borderColor='#63cab7';});
       div.addEventListener('dragleave',()=>{div.style.background=pr?prC+'10':isWk?BG2():BG3();div.style.borderColor=hasV?'rgba(248,113,113,.6)':isAP?(prC||'#63cab7'):isNxtP?'rgba(99,202,183,.5)':isWk?BDR2():BDR();});
       div.addEventListener('drop',()=>{if(dragId){if(isPgy5&&!cell.pair){const was=activeCell;activeCell={week,day,slot:'pair'};assign(week,day,dragId);}else{activeCell={week,day,slot:'primary'};assign(week,day,dragId);}}});
+      
       // Holiday overlay
       if(cfg.showHolidays&&isHoliday(week,day)){
         const hl=document.createElement('div');
@@ -791,6 +808,7 @@ function renderGrid(){
         hl.innerHTML='<span style="font-size:7px;color:#fb7185;letter-spacing:.04em;text-align:center;padding:0 2px">'+holidayName(week,day)+'</span>';
         div.appendChild(hl);
       }
+      
       // Backup slot (when enabled and cell has primary)
       if(cfg.showBackup&&pr){
         const bkSep=document.createElement('div');bkSep.style.cssText='width:80%;height:1px;background:'+BDR2()+';margin:2px auto';div.appendChild(bkSep);
@@ -812,6 +830,7 @@ function renderGrid(){
           div.appendChild(bkSlot);
         }
       }
+      
       div.addEventListener('click',()=>{
         if(pr){openCellModal(week,day);}
         else{if(!cell.primary)activeCell={week,day,slot:'primary'};else if(isPgy5&&!cell.pair)activeCell={week,day,slot:'pair'};render();}
@@ -823,6 +842,7 @@ function renderGrid(){
     tbody.appendChild(tr);
   });
   tbl.appendChild(tbody);wrap.appendChild(tbl);
+  
   const leg=document.createElement('div');leg.style.cssText='margin-top:12px;display:flex;gap:12px;flex-wrap:wrap';
   [['#6366f1','Weekend'],['#fb923c','No post-call (Fri/Sat)'],['#818cf8','Academic day (Mon)'],['#f87171','Violation'],['#63cab7','Next empty'],['#a78bfa','Pair needed'],['#fbbf24','Has notes'],['#818cf8','Swapped'],['#fb7185','Holiday (right-click empty cell)']].forEach(([c,l])=>{
     leg.innerHTML+=`<div style="display:flex;align-items:center;gap:4px;font-size:8px;color:${T4()}"><div style="width:5px;height:5px;border-radius:50%;background:${c}"></div>${l}</div>`;
