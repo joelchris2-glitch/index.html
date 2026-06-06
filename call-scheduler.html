@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Residency Call Scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#07111f;--bg2:#04090f;--bg3:#080f1c;--bg4:#0f1a2e;--bdr:#0e2035;--bdr2:#1e3a5f;--t1:#e2e8f0;--t2:#94a3b8;--t3:#475569;--t4:#334155;--t5:#1e4d6b}
+[data-theme=light]{--bg:#f1f5f9;--bg2:#e8eef5;--bg3:#ffffff;--bg4:#f8fafc;--bdr:#e2e8f0;--bdr2:#cbd5e1;--t1:#0f172a;--t2:#334155;--t3:#64748b;--t4:#94a3b8;--t5:#bfdbf7}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:var(--bg);font-family:'DM Mono','Courier New',monospace;color:var(--t1);transition:background .25s,color .25s}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+button,input,select,textarea{font-family:'DM Mono',monospace;cursor:pointer}
+input,select,textarea{background:var(--bg3);border:1px solid var(--bdr2);color:var(--t1);border-radius:6px;padding:7px 10px;font-size:12px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#63cab7}
+.hbtn{background:none;border:none;border-bottom:2px solid transparent;padding:6px 14px;font-size:10px;letter-spacing:.12em;color:var(--t3);text-transform:uppercase;transition:all .2s}
+.hbtn.on{color:#63cab7;border-bottom-color:#63cab7}
+.staff-card{transition:all .15s;user-select:none;cursor:grab}.staff-card:hover{filter:brightness(1.15)}
+.staff-card.drag{opacity:.35;transform:scale(.95)}
+input[type=range]{height:4px;appearance:none;background:var(--bdr2);border-radius:2px;width:100%;accent-color:#63cab7}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:#63cab7}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}.ov.open{display:flex}
+.mbox{background:var(--bg4);border:1px solid var(--bdr2);border-radius:14px;width:100%;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.mhdr{padding:16px 22px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.mbody{overflow-y:auto;padding:14px 22px;flex:1}
+.mftr{padding:12px 22px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
+.btn-c{background:none;border:1px solid var(--bdr2);color:var(--t3);border-radius:7px;padding:7px 18px;font-size:11px}.btn-c:hover{border-color:var(--t3)}
+.btn-p{background:linear-gradient(135deg,#1e4d6b,#1a3a5c);border:1px solid rgba(37,99,235,.25);color:#93c5fd;border-radius:7px;padding:7px 18px;font-size:11px}.btn-p:hover{opacity:.9}
+.btn-g{background:rgba(99,202,183,.1);border:1px solid rgba(99,202,183,.3);color:#63cab7;border-radius:7px;padding:7px 18px;font-size:11px}.btn-g:hover{background:rgba(99,202,183,.18)}
+.tgl{width:38px;height:20px;border-radius:10px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tgl-d{position:absolute;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s}
+.pulse{animation:cp 1.5s ease-in-out infinite}
+@keyframes cp{0%,100%{box-shadow:0 0 0 0 rgba(99,202,183,.3),inset 0 0 0 1px rgba(99,202,183,.3)}50%{box-shadow:0 0 0 5px rgba(99,202,183,0),inset 0 0 0 1px rgba(99,202,183,.9)}}
+.ppulse{animation:pp 1.5s ease-in-out infinite}
+@keyframes pp{0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,.3),inset 0 0 0 1px rgba(167,139,250,.3)}50%{box-shadow:0 0 0 4px rgba(167,139,250,0),inset 0 0 0 1px rgba(167,139,250,.9)}}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--bdr)}
+#layout{display:flex;height:calc(100vh - 115px)}
+#sb{width:210px;min-width:210px;border-right:1px solid var(--bdr);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden}
+#sbl{flex:1;overflow-y:auto;padding:8px 11px}
+#main{flex:1;overflow-y:auto;padding:18px 22px}
+.cell{border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative;cursor:pointer;border:1px solid var(--bdr);background:var(--bg3);padding:4px 2px;transition:background .12s,border-color .12s}
+.cell:hover{filter:brightness(1.08)}
+.ct-tag{font-size:7px;padding:1px 5px;border-radius:3px;letter-spacing:.06em;font-weight:500;margin-top:1px;text-transform:uppercase}
+.note-dot{position:absolute;bottom:3px;left:4px;width:4px;height:4px;border-radius:50%;background:#fbbf24}
+.swap-ic{position:absolute;bottom:3px;right:4px;font-size:8px;color:#818cf8}
+/* ── Settings Feature Rows ── */
+.f-row{display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px}
+.s-tab{font-family:'DM Mono',monospace}
+/* ── AI Chat Panel ── */
+#aiPanel{position:fixed;top:0;right:0;width:360px;height:100vh;background:var(--bg4);border-left:1px solid var(--bdr2);display:flex;flex-direction:column;z-index:150;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 32px rgba(0,0,0,.3)}
+#aiPanel.open{transform:translateX(0)}
+#aiMsgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{max-width:88%;padding:9px 12px;border-radius:10px;font-size:12px;line-height:1.55;word-break:break-word}
+.ai-msg.user{align-self:flex-end;background:rgba(99,202,183,.15);border:1px solid rgba(99,202,183,.3);color:var(--t1);border-bottom-right-radius:3px}
+.ai-msg.assistant{align-self:flex-start;background:var(--bg3);border:1px solid var(--bdr);color:var(--t1);border-bottom-left-radius:3px}
+.ai-msg.loading{color:var(--t3);font-style:italic}
+.ai-dot{display:inline-block;animation:blink 1.2s ease-in-out infinite}.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+#aiInput{border:none;border-top:1px solid var(--bdr);background:var(--bg3);color:var(--t1);padding:12px 14px;font-size:12px;resize:none;height:70px;width:100%;line-height:1.5}
+#aiInput:focus{outline:none}
+#aiInput::placeholder{color:var(--t4)}
+@media print{
+  #sb,.no-print,#topbar .tb-btns{display:none!important}
+  #layout{height:auto}#main{overflow:visible;padding:0}
+  body{background:white!important;color:black!important}
+  .cell{border:1px solid #ccc!important;background:white!important;page-break-inside:avoid}
+  * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ── MODALS ──────────────────────────────────────────── -->
+<div class="ov" id="mStaff" onclick="closeM('mStaff')">
+ <div class="mbox" style="max-width:540px" onclick="event.stopPropagation()">
+  <div class="mhdr">
+   <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)">Manage Residents</span>
+   <button onclick="closeM('mStaff')" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1">×</button>
+  </div>
+  <div id="msPills" style="padding:8px 22px 6px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--bdr)"></div>
+  <div class="mbody" id="msBody"></div>
+  <div class="mftr"><button class="btn-c" onclick="closeM('mStaff')">Cancel</button><button class="btn-p" onclick="saveStaff()">Save Roster</button></div>
+ </div>
+</div>
+
+<div class="ov" id="mRules" onclick="closeM('mRules')">
+ <div class="mbox" style="max-width:540px" onclick="event.stopPropagation()">
+  <div class="mhdr">
+   <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)">Settings &amp; Features</span>
+   <button onclick="closeM('mRules')" style="background:none;border:none;color:var(--t3);font-size:20px">x</button>
+  </div>
+  <div style="display:flex;gap:0;padding:0 22px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+   <button id="st-rules" onclick="setSTab('rules')" style="background:none;border:none;border-bottom:2px solid #63cab7;padding:8px 14px;font-size:10px;letter-spacing:.1em;color:#63cab7;text-transform:uppercase;cursor:pointer;font-family:'DM Mono',monospace">Rules</button>
+   <button id="st-features" onclick="setSTab('features')" style="background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:10px;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;cursor:pointer;font-family:'DM Mono',monospace">Features</button>
+   <button id="st-interface" onclick="setSTab('interface')" style="background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:10px;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;cursor:pointer;font-family:'DM Mono',monospace">Interface</button>
+  </div>
+  <div class="mbody" id="sTab-rules" style="display:flex;flex-direction:column;gap:14px;padding:18px 22px">
+   <div><label style="font-size:10px;color:var(--t2);letter-spacing:.1em;display:block;margin-bottom:5px;text-transform:uppercase">PGY 1-2 Max Calls / Month</label>
+    <div style="display:flex;align-items:center;gap:12px"><input type="range" id="r12" min="1" max="10" value="4" oninput="document.getElementById('v12').textContent=this.value"/><span id="v12" style="color:#60a5fa;font-size:16px;font-weight:500;min-width:20px">4</span></div></div>
+   <div><label style="font-size:10px;color:var(--t2);letter-spacing:.1em;display:block;margin-bottom:5px;text-transform:uppercase">PGY 3-5 Max Calls / Month</label>
+    <div style="display:flex;align-items:center;gap:12px"><input type="range" id="r35" min="1" max="10" value="3" oninput="document.getElementById('v35').textContent=this.value"/><span id="v35" style="color:#fbbf24;font-size:16px;font-weight:500;min-width:20px">3</span></div></div>
+   <div><label style="font-size:10px;color:var(--t2);letter-spacing:.1em;display:block;margin-bottom:5px;text-transform:uppercase">Min Days Off Between Calls</label>
+    <div style="display:flex;gap:8px" id="mdBtns">
+     <button class="md-btn" data-v="1" onclick="selMD(1)" style="flex:1;padding:7px;border-radius:7px;font-size:11px">1 (no B2B)</button>
+     <button class="md-btn" data-v="2" onclick="selMD(2)" style="flex:1;padding:7px;border-radius:7px;font-size:11px">2 days</button>
+     <button class="md-btn" data-v="3" onclick="selMD(3)" style="flex:1;padding:7px;border-radius:7px;font-size:11px">3 days</button>
+    </div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px">
+    <div><div style="font-size:12px;color:var(--t1)">Weekend Rotation Check</div><div style="font-size:10px;color:var(--t3);margin-top:2px">Warn when weekend call spread greater than 2</div></div>
+    <div class="tgl" id="wkTgl" onclick="togWK()"><div class="tgl-d" id="wkDot"></div></div>
+   </div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px">
+    <div><div style="font-size:12px;color:var(--t1)">ACGME Q3 Rule Check</div><div style="font-size:10px;color:var(--t3);margin-top:2px">Warn when call gap is less than 3 nights</div></div>
+    <div class="tgl" id="q3Tgl" onclick="togQ3()"><div class="tgl-d" id="q3Dot"></div></div>
+   </div>
+   <div><label style="font-size:10px;color:var(--t2);letter-spacing:.1em;display:block;margin-bottom:5px;text-transform:uppercase">Avg Call Duration (hours, for duty hour estimate)</label>
+    <div style="display:flex;align-items:center;gap:12px"><input type="range" id="rDur" min="4" max="24" value="12" oninput="document.getElementById('vDur').textContent=this.value+'h'"/><span id="vDur" style="color:#63cab7;font-size:14px;font-weight:500;min-width:30px">12h</span></div></div>
+  </div>
+  <div class="mbody" id="sTab-features" style="display:none;flex-direction:column;gap:8px;padding:16px 22px">
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px">Scheduling Tools</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Auto-Fill</div><div style="font-size:10px;color:var(--t3)">Smart one-click schedule filling with fairness scoring</div></div><div class="tgl" id="afTgl" onclick="togF('showAutoFill','afTgl','afDot')"><div class="tgl-d" id="afDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Pattern Fill (Q-call)</div><div style="font-size:10px;color:var(--t3)">Fill Q2/Q3/Q4/Q5 patterns automatically</div></div><div class="tgl" id="pfTgl" onclick="togF('showPatternFill','pfTgl','pfDot')"><div class="tgl-d" id="pfDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Backup Call Slot</div><div style="font-size:10px;color:var(--t3)">Third slot per cell for a backup resident</div></div><div class="tgl" id="bkTgl" onclick="togBK()"><div class="tgl-d" id="bkDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Holiday Flagging</div><div style="font-size:10px;color:var(--t3)">Right-click any empty cell to mark as a holiday</div></div><div class="tgl" id="hlTgl" onclick="togF('showHolidays','hlTgl','hlDot')"><div class="tgl-d" id="hlDot"></div></div></div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Display Options</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Call Type Tags</div><div style="font-size:10px;color:var(--t3)">ICU / Floor / ED / Night Float labels on cells</div></div><div class="tgl" id="ctTgl" onclick="togF('showCallTypes','ctTgl','ctDot')"><div class="tgl-d" id="ctDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Fairness Score</div><div style="font-size:10px;color:var(--t3)">Peer-relative burden score in sidebar and summary</div></div><div class="tgl" id="fsTgl" onclick="togF('showFairness','fsTgl','fsDot')"><div class="tgl-d" id="fsDot"></div></div></div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Exports</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">CSV Export</div><div style="font-size:10px;color:var(--t3)">Download full schedule as spreadsheet</div></div><div class="tgl" id="csvTgl" onclick="togF('showCSV','csvTgl','csvDot')"><div class="tgl-d" id="csvDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Print Button</div><div style="font-size:10px;color:var(--t3)">Print-optimised schedule layout</div></div><div class="tgl" id="prTgl" onclick="togF('showPrint','prTgl','prDot')"><div class="tgl-d" id="prDot"></div></div></div>
+  </div>
+  <div class="mbody" id="sTab-interface" style="display:none;flex-direction:column;gap:8px;padding:16px 22px">
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px">AI Assistant</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">AI Assistant (Gemini)</div><div style="font-size:10px;color:var(--t3)">Schedule-aware AI chat - requires Gemini API key</div></div><div class="tgl" id="aiTgl" onclick="togF('showAI','aiTgl','aiDot')"><div class="tgl-d" id="aiDot"></div></div></div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Visible Tabs</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Availability Tab</div><div style="font-size:10px;color:var(--t3)">Mark days residents are unavailable</div></div><div class="tgl" id="avTgl" onclick="togF('showAvailTab','avTgl','avDot')"><div class="tgl-d" id="avDot"></div></div></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Resident View Tab</div><div style="font-size:10px;color:var(--t3)">Per-resident schedule card with iCal export</div></div><div class="tgl" id="rvTgl" onclick="togF('showResidentTab','rvTgl','rvDot')"><div class="tgl-d" id="rvDot"></div></div></div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Text Size</div>
+   <div style="display:flex;gap:6px;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px">
+    <span style="font-size:10px;color:var(--t3)">Scale:</span>
+    <button onclick="setFontScale(0.85)" style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid var(--bdr2);background:var(--bg3);color:var(--t2);cursor:pointer;font-family:inherit">A-</button>
+    <button onclick="setFontScale(1.0)" style="padding:5px 10px;border-radius:6px;font-size:12px;border:1px solid var(--bdr2);background:var(--bg3);color:var(--t2);cursor:pointer;font-family:inherit">A</button>
+    <button onclick="setFontScale(1.15)" style="padding:5px 10px;border-radius:6px;font-size:13px;border:1px solid var(--bdr2);background:var(--bg3);color:var(--t2);cursor:pointer;font-family:inherit">A+</button>
+    <button onclick="setFontScale(1.3)" style="padding:5px 10px;border-radius:6px;font-size:14px;border:1px solid var(--bdr2);background:var(--bg3);color:var(--t2);cursor:pointer;font-family:inherit">A++</button>
+   </div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Province / Region</div>
+   <div style="padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px">
+    <div style="font-size:10px;color:var(--t3);margin-bottom:6px">Used for public holiday auto-loading</div>
+    <select id="provSel" onchange="cfg.province=this.value;save()" style="width:100%;font-size:12px;padding:6px 10px;border-radius:6px">
+     <option value="SK">Saskatchewan (SK)</option>
+     <option value="ON">Ontario (ON)</option>
+     <option value="AB">Alberta (AB)</option>
+     <option value="BC">British Columbia (BC)</option>
+     <option value="MB">Manitoba (MB)</option>
+    </select>
+   </div>
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;margin-bottom:2px">Appearance</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px"><div><div style="font-size:12px;color:var(--t1)">Dark Mode</div><div style="font-size:10px;color:var(--t3)">Toggle between dark and light theme</div></div><div class="tgl" id="dmTgl" onclick="toggleTheme();renderSettingToggles()"><div class="tgl-d" id="dmDot"></div></div></div>
+   <div style="padding:11px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;font-size:10px;color:var(--t3);line-height:1.7;margin-top:4px">
+    <div style="color:#fbbf24;font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Data and Privacy</div>
+    All data is stored locally in your browser. Nothing is sent to any server except AI queries to Gemini when the AI assistant is active and you have set an API key.
+    <button onclick="if(confirm('Clear ALL data?')){localStorage.clear();location.reload();}" style="display:block;margin-top:8px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:5px;padding:4px 12px;font-size:10px;cursor:pointer;font-family:inherit">Clear All Data</button>
+   </div>
+  </div>
+  <div class="mftr"><button class="btn-c" onclick="closeM('mRules')">Cancel</button><button class="btn-p" onclick="saveRules()">Apply</button></div>
+ </div>
+</div>
+
+<div class="ov" id="mCell" onclick="closeM('mCell')">
+ <div class="mbox" style="max-width:400px" onclick="event.stopPropagation()">
+  <div class="mhdr">
+   <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)" id="mCellTitle">Call Details</span>
+   <button onclick="closeM('mCell')" style="background:none;border:none;color:var(--t3);font-size:20px">×</button>
+  </div>
+  <div class="mbody" id="mCellBody" style="display:flex;flex-direction:column;gap:14px;padding:18px 22px"></div>
+  <div class="mftr"><button class="btn-c" onclick="closeM('mCell')">Cancel</button><button class="btn-g" onclick="saveCellDetails()">Save</button></div>
+ </div>
+</div>
+
+
+<div class="ov" id="mPattern" onclick="closeM('mPattern')">
+ <div class="mbox" style="max-width:420px" onclick="event.stopPropagation()">
+  <div class="mhdr">
+   <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)">Pattern Fill (Q-Call)</span>
+   <button onclick="closeM('mPattern')" style="background:none;border:none;color:var(--t3);font-size:20px">×</button>
+  </div>
+  <div class="mbody" id="patBody" style="padding:16px 22px"></div>
+  <div class="mftr">
+   <button class="btn-c" onclick="closeM('mPattern')">Cancel</button>
+   <button class="btn-g" onclick="applyPattern()">Apply Pattern</button>
+  </div>
+ </div>
+</div>
+
+<!-- ── GOOGLE DRIVE MODAL ───────────────────────────────── -->
+<div class="ov" id="mDrive" onclick="closeM('mDrive')">
+ <div class="mbox" style="max-width:480px" onclick="event.stopPropagation()">
+  <div class="mhdr">
+   <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--t1)">☁ Google Drive Sync</span>
+   <button onclick="closeM('mDrive')" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1">×</button>
+  </div>
+  <div class="mbody" style="display:flex;flex-direction:column;gap:14px;padding:18px 22px">
+   <div style="padding:10px 13px;background:rgba(99,202,183,.07);border:1px solid rgba(99,202,183,.2);border-radius:8px;font-size:11px;color:var(--t2);line-height:1.65">
+    Save your schedule to Google Drive and open it from any device — iPad, laptop, or desktop. Requires a free Google Cloud OAuth Client ID (one-time setup).
+    <br><a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#63cab7;text-decoration:none">→ Get a Client ID at console.cloud.google.com</a>
+   </div>
+   <div>
+    <div style="font-size:10px;color:var(--t2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Your OAuth Client ID</div>
+    <div style="display:flex;gap:7px">
+     <input type="text" id="gClientId" placeholder="xxxxxxxx.apps.googleusercontent.com" style="flex:1;font-size:11px"/>
+     <button onclick="saveClientId()" class="btn-g" style="white-space:nowrap;font-size:11px">Save</button>
+    </div>
+    <div style="font-size:9px;color:var(--t4);margin-top:5px">Stored only in this browser. Set Authorised JavaScript origins to your hosting URL.</div>
+   </div>
+   <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px">
+    <div>
+     <div style="font-size:12px;color:var(--t1)">Google Account</div>
+     <div id="gTokenStatus" style="font-size:10px;color:var(--t3);margin-top:2px">Not signed in</div>
+    </div>
+    <button onclick="gdriveSignIn()" class="btn-g" style="font-size:11px">Sign in with Google</button>
+   </div>
+   <div id="gdriveSyncStatus" style="font-size:11px;color:var(--t3);min-height:16px;padding:0 2px"></div>
+   <div style="display:flex;gap:8px">
+    <button id="gdriveSaveBtn" onclick="gdriveSave()" class="btn-p" style="flex:1;opacity:0.5" disabled>↑ Save to Drive</button>
+    <button id="gdriveLoadBtn" onclick="gdriveLoad()" class="btn-g" style="flex:1;opacity:0.5" disabled>↓ Load from Drive</button>
+   </div>
+   <div style="font-size:9px;color:var(--t4);line-height:1.6;padding:8px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:7px">
+    <strong style="color:var(--t3)">Privacy:</strong> Your schedule is saved as <code style="font-size:9px">call-schedule-data.json</code> in your personal Google Drive. Nothing is sent to any server except Google. The OAuth token is stored only in memory and expires after 1 hour — you'll need to sign in again each session.
+   </div>
+  </div>
+  <div class="mftr"><button class="btn-c" onclick="closeM('mDrive')">Close</button></div>
+ </div>
+</div>
+
+<!-- ── TOP BAR ─────────────────────────────────────────── -->
+<div id="topbar" style="padding:0 24px">
+ <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;padding-bottom:6px;flex-wrap:wrap;gap:8px">
+  <div>
+   <div style="font-size:9px;letter-spacing:.28em;color:var(--t5);text-transform:uppercase;margin-bottom:2px">Overnight · On-Call Planner</div>
+   <h1 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,#93c5fd,#63cab7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Residency Call Schedule</h1>
+  </div>
+  <!-- Month nav -->
+  <div style="display:flex;align-items:center;gap:8px">
+   <button onclick="prevMonth()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:5px 10px;font-size:13px">‹</button>
+   <div id="monthLabel" style="font-size:12px;color:var(--t1);min-width:110px;text-align:center;letter-spacing:.05em"></div>
+   <button onclick="nextMonth()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:5px 10px;font-size:13px">›</button>
+  </div>
+  <!-- Action buttons -->
+  <div class="tb-btns no-print" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+   <button onclick="openM('mStaff')" style="background:rgba(147,197,253,.08);border:1px solid rgba(147,197,253,.2);color:#93c5fd;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⊕ ROSTER</button>
+   <button onclick="openM('mRules')" style="background:rgba(99,202,183,.08);border:1px solid rgba(99,202,183,.2);color:#63cab7;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⚙ RULES</button>
+   <button onclick="toggleStatus()" id="statusBtn" style="border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">● DRAFT</button>
+   <button onclick="autoFill()" style="background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.3);color:#818cf8;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">✦ AUTO-FILL</button>
+   <button onclick="openPatternFill()" style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:#34d399;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⊞ PATTERN</button>
+   <button onclick="clearSched()" style="background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.2);color:#f87171;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">✕ CLEAR</button>
+   <button onclick="exportCSV()" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);color:#fbbf24;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">↓ CSV</button>
+   <button onclick="window.print()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⎙ PRINT</button>
+   <button id="undoBtn" onclick="undo()" title="Undo (Ctrl/Cmd+Z)" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:7px;padding:6px 10px;font-size:12px;opacity:0.35">↩</button>
+   <button id="redoBtn" onclick="redo()" title="Redo (Ctrl/Cmd+Y)" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:7px;padding:6px 10px;font-size:12px;opacity:0.35">↪</button>
+   <button onclick="openDriveModal()" style="background:rgba(99,202,183,.08);border:1px solid rgba(99,202,183,.25);color:#63cab7;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">☁ DRIVE</button>
+   <button onclick="toggleAI()" id="aiBtnTop" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">✦ AI</button>
+   <button onclick="toggleTheme()" id="themBtn" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:7px;padding:6px 10px;font-size:14px">☀</button>
+  </div>
+ </div>
+ <div id="banner" style="display:flex;gap:8px;flex-wrap:wrap;min-height:0;padding-bottom:4px"></div>
+ <div style="display:flex;gap:0;margin-top:2px">
+  <button class="hbtn on" id="t-grid" onclick="setTab('grid')">GRID</button>
+  <button class="hbtn" id="t-violations" onclick="setTab('violations')">VIOLATIONS</button>
+  <button class="hbtn" id="t-summary" onclick="setTab('summary')">SUMMARY</button>
+  <button class="hbtn" id="t-avail" onclick="setTab('avail')">AVAILABILITY</button>
+  <button class="hbtn" id="t-resident" onclick="setTab('resident')">RESIDENT VIEW</button>
+ </div>
+</div>
+
+<div id="layout">
+ <div id="sb">
+  <div style="padding:10px 12px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+   <div style="font-size:9px;letter-spacing:.18em;color:var(--t5);margin-bottom:7px;text-transform:uppercase">Year Filter</div>
+   <div id="pgyF" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+  <div id="sbl"></div>
+  <div id="meter" style="padding:10px 12px;border-top:1px solid var(--bdr);flex-shrink:0"></div>
+ </div>
+ <div id="main">
+  <div id="pGrid"></div>
+  <div id="pViol" style="display:none"></div>
+  <div id="pSum" style="display:none"></div>
+  <div id="pAvail" style="display:none"></div>
+  <div id="pResident" style="display:none"></div>
+ </div>
+</div>
+
+<div id="aiPanel">
+ <!-- Header -->
+ <div style="padding:14px 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+   <div>
+    <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1)">Schedule Assistant</div>
+    <div style="font-size:10px;color:var(--t3);margin-top:2px">Powered by Gemini · knows your full schedule</div>
+   </div>
+   <button onclick="toggleAI()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
+  </div>
+  <!-- Key input -->
+  <div id="keySection">
+   <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Gemini API Key</div>
+   <div style="display:flex;gap:6px">
+    <input type="password" id="geminiKeyInput" placeholder="Paste your key here" onkeydown="if(event.key==='Enter')setKey()" style="flex:1;font-size:11px;padding:6px 9px;border-radius:6px"/>
+    <button id="setKeyBtn" onclick="setKey()" style="background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;padding:6px 11px;font-size:11px;white-space:nowrap">Set Key</button>
+   </div>
+   <div id="keyStatus" style="font-size:10px;color:var(--t4);margin-top:5px">Key stored in memory only — never saved to disk</div>
+  </div>
+ </div>
+ <div id="fileWarn" style="display:none;padding:10px 14px;background:rgba(251,191,36,.1);border-bottom:1px solid rgba(251,191,36,.25);font-size:11px;color:#fbbf24;line-height:1.6;flex-shrink:0">
+  ⚠️ <strong>Local server needed for AI.</strong><br>Open Terminal and run:<br>
+  <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:10px;display:inline-block;margin-top:3px">cd ~/Downloads && python3 -m http.server 8080</code><br>
+  Then open <strong>http://localhost:8080/call-scheduler.html</strong>
+ </div>
+ <!-- Suggested prompts -->
+ <div id="aiSuggestions" style="padding:10px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;display:flex;flex-wrap:wrap;gap:5px">
+  <div style="font-size:9px;color:var(--t4);width:100%;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Try asking</div>
+  <button class="ai-sug" onclick="askSuggestion(this)">Fix all current violations</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Fill all empty slots fairly</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Dr. [Name] is sick Week 2 Mon — reassign it</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Swap Week 1 Fri with Week 2 Fri</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Change PGY 1-2 max calls to 5</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Who can cover Week 3 Saturday?</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Block Dr. [Name] on Week 4 Friday</button>
+  <button class="ai-sug" onclick="askSuggestion(this)">Draft schedule summary email</button>
+ </div>
+ <!-- Messages -->
+ <div id="aiMsgs">
+  <div class="ai-msg assistant">Hi! I can both answer questions AND directly modify your schedule. Try: "Dr. Chen is sick Week 2 Monday — reassign it" or "Fix all current violations" or "Change PGY 1-2 max to 5 calls". I'll use tools to make the changes live.</div>
+ </div>
+ <!-- Input -->
+ <div style="border-top:1px solid var(--bdr);flex-shrink:0;position:relative">
+  <textarea id="aiInput" placeholder="Ask about your schedule..." onkeydown="aiKeyDown(event)"></textarea>
+  <button onclick="sendAI()" style="position:absolute;right:10px;bottom:12px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;padding:5px 11px;font-size:11px">Send ↑</button>
+ </div>
+</div>
+
+<style>
+.ai-sug{background:var(--bg3);border:1px solid var(--bdr);color:var(--t3);border-radius:6px;padding:4px 9px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s}
+.ai-sug:hover{border-color:#a78bfa;color:#a78bfa}
+</style>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const WEEKEND=["Sat","Sun"],NO_PC=["Fri","Sat"],ACADEMIC=["Mon"];
+const WEEKS=["Week 1","Week 2","Week 3","Week 4"];
+const PC={1:"#60a5fa",2:"#34d399",3:"#fbbf24",4:"#f472b6",5:"#a78bfa"};
+const PL={1:"PGY-1",2:"PGY-2",3:"PGY-3",4:"PGY-4",5:"PGY-5"};
+const CALL_TYPES=[
+  {id:'',label:'Unspecified',color:'#64748b'},
+  {id:'ICU',label:'ICU',color:'#ef4444'},
+  {id:'FLR',label:'Floor',color:'#3b82f6'},
+  {id:'ED',label:'ED',color:'#f59e0b'},
+  {id:'NF',label:'Night Float',color:'#8b5cf6'},
+  {id:'HC',label:'Home Call',color:'#6b7280'},
+];
+const MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let staff=Array.from({length:14},(_,i)=>({id:'r'+i,name:'',pgy:i<3?1:i<6?2:i<9?3:i<12?4:5}));
+let cfg={max12:4,max35:3,minGap:1,wkndCheck:true,acgmeQ3:false,callDuration:12,showBackup:false,showCallTypes:true,showFairness:true,showHolidays:true,showAI:true,showPatternFill:true,showAutoFill:true,showCSV:true,showPrint:true,showAvailTab:true,showResidentTab:true,fontScale:1.0,province:'SK',viewMode:'month',viewWeek:0};
+let allStatus={};
+let allHolidays={};
+let viewY=new Date().getFullYear(),viewM=new Date().getMonth(); // 0-indexed
+let allSched={}; // key:"YYYY-MM" -> {week:{day:{primary,pair,type,note,swap}}}
+let avail={}; // key:staffId -> Set of "Wk-Day" blocked for current viewMonth
+let activeCell=null; // {week,day,slot}
+let dragId=null,fPgy=0,curTab='grid';
+let tmpMD=1,tmpWK=true,tmpQ3=false,tmpBK=false,tmpStaff=[];
+let cellEditKey=null; // "Week1-Mon" being edited in cell modal
+let isDark=true;
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function save(){
+  try{
+    const availArr={};
+    for(const k in avail){availArr[k]=Array.from(avail[k] instanceof Set?avail[k]:new Set(avail[k]));}
+    localStorage.setItem('rcs_v3',JSON.stringify({staff,cfg,allSched,avail:availArr,allStatus,allHolidays,viewY,viewM,isDark}));
+  }catch(e){}
+}
+function load(){
+  try{
+    const d=localStorage.getItem('rcs_v3')||localStorage.getItem('rcs_v2');
+    if(!d)return;
+    const p=JSON.parse(d);
+    if(p.staff)staff=p.staff;
+    if(p.cfg)cfg=p.cfg;
+    if(p.allSched)allSched=p.allSched;
+    if(p.avail){
+      avail={};
+      for(const k in p.avail){avail[k]=new Set(Array.isArray(p.avail[k])?p.avail[k]:Object.values(p.avail[k]||{}));}
+    }
+    if(p.allStatus)allStatus=p.allStatus;
+    if(p.allHolidays)allHolidays=p.allHolidays;
+    if(p.viewY)viewY=p.viewY;
+    if(typeof p.viewM==='number')viewM=p.viewM;
+    if(typeof p.isDark==='boolean')isDark=p.isDark;
+  }catch(e){}
+}
+
+function monthKey(y,m){return `${y}-${String(m+1).padStart(2,'0')}`;}
+function getCurSched(){
+  const k=monthKey(viewY,viewM);
+  if(!allSched[k]){
+    allSched[k]={};
+    WEEKS.forEach(w=>{allSched[k][w]={};DAYS.forEach(d=>{allSched[k][w][d]={primary:null,pair:null,backup:null,type:'',note:'',swap:false,swapWith:''};});});
+  }
+  return allSched[k];
+}
+function getCell(w,d){return getCurSched()[w][d];}
+function setCell(w,d,val){getCurSched()[w][d]=val;save();}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const gIdx=(wi,di)=>wi*7+di;
+const sbId=id=>staff.find(s=>s.id===id);
+const maxP=pgy=>pgy<=2?cfg.max12:cfg.max35;
+const mkId=()=>Math.random().toString(36).slice(2,8);
+const ctInfo=id=>CALL_TYPES.find(c=>c.id===id)||CALL_TYPES[0];
+
+function blocked(sid,week,day){
+  const k=monthKey(viewY,viewM)+'-'+sid;
+  return (avail[k]||new Set()).has(week+'-'+day);
+}
+function toggleBlock(sid,week,day){
+  snapshot();
+  const k=monthKey(viewY,viewM)+'-'+sid;
+  if(!avail[k])avail[k]=new Set();
+  const key=week+'-'+day;
+  if(avail[k].has(key))avail[k].delete(key);else avail[k].add(key);
+  save();render();
+}
+
+function resCells(sid){
+  const out=[];
+  WEEKS.forEach((w,wi)=>DAYS.forEach((d,di)=>{
+    const c=getCell(w,d);
+    if(c.primary===sid)out.push({week:w,day:d,wi,di,slot:'primary'});
+    if(c.pair===sid)out.push({week:w,day:d,wi,di,slot:'pair'});
+  }));
+  return out;
+}
+function countCalls(sid){return resCells(sid).length;}
+function countWknd(sid){return resCells(sid).filter(c=>WEEKEND.includes(c.day)).length;}
+
+function hKey(){return monthKey(viewY,viewM);}
+function isHoliday(w,d){const h=allHolidays[hKey()];return h&&h[w+'-'+d]!==undefined;}
+function holidayName(w,d){const h=allHolidays[hKey()];return h?h[w+'-'+d]||null:null;}
+function toggleHoliday(w,d){
+  snapshot();
+  if(!allHolidays[hKey()])allHolidays[hKey()]={};
+  const key=w+'-'+d;
+  if(allHolidays[hKey()][key]!==undefined){delete allHolidays[hKey()][key];}
+  else{const name=prompt('Holiday name (e.g. Christmas Day):','Holiday');if(name!==null)allHolidays[hKey()][key]=name;}
+  save();render();
+}
+function getStatus(){return allStatus[monthKey(viewY,viewM)]||'draft';}
+function toggleStatus(){allStatus[monthKey(viewY,viewM)]=getStatus()==='draft'?'published':'draft';save();render();}
+function nextEmptyPrimary(week,day){
+  let wi=WEEKS.indexOf(week),di=DAYS.indexOf(day)+1;
+  while(wi<WEEKS.length){while(di<DAYS.length){if(!getCell(WEEKS[wi],DAYS[di]).primary)return{week:WEEKS[wi],day:DAYS[di]};di++;}wi++;di=0;}
+  return null;
+}
+
+// ── Rules engine ──────────────────────────────────────────────────────────────
+function violations(){
+  const V=[];
+  staff.forEach(s=>{
+    if(!s.name.trim())return;
+    const cells=resCells(s.id);
+    const days=cells.map(c=>c.day);
+    const mx=maxP(s.pgy);
+    if(cells.length>mx)V.push({key:'mx-'+s.id,type:'error',sid:s.id,msg:`${s.name} has ${cells.length} calls (${PL[s.pgy]} max: ${mx})`});
+    const wk=cells.filter(c=>WEEKEND.includes(c.day)).length;
+    if(wk>1)V.push({key:'wk-'+s.id,type:'error',sid:s.id,msg:`${s.name} has ${wk} weekend calls (max 1/month)`});
+    const sorted=[...cells].sort((a,b)=>gIdx(a.wi,a.di)-gIdx(b.wi,b.di));
+    for(let i=1;i<sorted.length;i++){
+      const gap=gIdx(sorted[i].wi,sorted[i].di)-gIdx(sorted[i-1].wi,sorted[i-1].di);
+      if(gap<=cfg.minGap)V.push({key:'b2b-'+s.id+i,type:'error',sid:s.id,ckeys:[`${sorted[i-1].week}-${sorted[i-1].day}`,`${sorted[i].week}-${sorted[i].day}`],msg:`${s.name}: back-to-back (${sorted[i-1].week} ${sorted[i-1].day} → ${sorted[i].week} ${sorted[i].day})`});
+    }
+    const hF=days.includes('Fri'),hS=days.includes('Sat'),hM=days.includes('Mon');
+    if(hF&&hS&&hM)V.push({key:'fsm-'+s.id,type:'error',sid:s.id,msg:`${s.name}: Fri+Sat+Mon combo — no post-call ×2 + academic day missed`});
+    else if(hF&&hS)V.push({key:'fs-'+s.id,type:'warning',sid:s.id,msg:`${s.name}: Fri+Sat — two consecutive no-post-call shifts`});
+    else if(hM&&(hF||hS))V.push({key:'ms-'+s.id,type:'warning',sid:s.id,msg:`${s.name}: Mon+${hF?'Fri':'Sat'} — academic day missed + no post-call`});
+  });
+  WEEKS.forEach(w=>DAYS.forEach(d=>{
+    const c=getCell(w,d);if(!c.primary)return;
+    const pr=sbId(c.primary);if(!pr||pr.pgy!==5)return;
+    if(!c.pair)V.push({key:'np-'+w+d,type:'error',wk:w,dy:d,msg:`${pr.name} (PGY-5) on ${w} ${d} — no junior paired`});
+    else{const pa=sbId(c.pair);if(pa&&pa.pgy!==2)V.push({key:'pp-'+w+d,type:'warning',wk:w,dy:d,msg:`${pr.name} paired with ${pa.name} (${PL[pa.pgy]}) — prefer PGY-2`});}
+  }));
+  if(cfg.wkndCheck){const named=staff.filter(s=>s.name.trim());if(named.length>1){const wcs=named.map(s=>countWknd(s.id));const mx=Math.max(...wcs),mn=Math.min(...wcs);if(mx-mn>2)V.push({key:'wi',type:'warning',msg:`Weekend imbalance: spread of ${mx-mn} (max ${mx} vs min ${mn})`});}}
+  return V;
+}
+
+// ── Fairness Score ────────────────────────────────────────────────────────────
+function fairness(sid){
+  const s=sbId(sid);if(!s)return null;
+  const peers=staff.filter(p=>p.name.trim()&&p.pgy===s.pgy);
+  if(peers.length<2)return null;
+  const dayBurden=d=>NO_PC.includes(d)?2:ACADEMIC.includes(d)?1.5:1;
+  const burden=p=>resCells(p.id).reduce((a,c)=>a+dayBurden(c.day),0);
+  const myB=burden(s);
+  const avg=peers.reduce((a,p)=>a+burden(p.id),0)/peers.length;
+  const dev=avg>0?Math.round((myB-avg)/avg*100):0;
+  return dev; // % above(+) or below(-) peer average
+}
+
+// ── Auto-fill ──────────────────────────────────────────────────────────────────
+function eligible(week,day,wi,di,excludeId=null){
+  return staff.filter(s=>{
+    if(!s.name.trim()||s.id===excludeId)return false;
+    if(blocked(s.id,week,day))return false;
+    if(resCells(s.id).length>=maxP(s.pgy))return false;
+    if(WEEKEND.includes(day)&&countWknd(s.id)>=1)return false;
+    const myI=gIdx(wi,di);
+    for(const c of resCells(s.id)){if(Math.abs(gIdx(c.wi,c.di)-myI)<=cfg.minGap)return false;}
+    return true;
+  });
+}
+
+function pickBest(pool,day){
+  if(!pool.length)return null;
+  return pool.map(s=>{
+    let score=0;
+    const cells=resCells(s.id),days=cells.map(c=>c.day),mx=maxP(s.pgy);
+    score+=(1-cells.length/mx)*100;
+    const hF=days.includes('Fri'),hS=days.includes('Sat'),hM=days.includes('Mon');
+    if(day==='Mon'&&hF&&hS)score-=200;
+    if(day==='Fri'&&hS)score-=80;if(day==='Sat'&&hF)score-=80;
+    if(day==='Mon'&&(hF||hS))score-=50;if((day==='Fri'||day==='Sat')&&hM)score-=50;
+    score+=Math.random()*8;
+    return{s,score};
+  }).sort((a,b)=>b.score-a.score)[0].s;
+}
+
+function autoFill(){
+  snapshot();
+  let filled=0;
+  WEEKS.forEach((w,wi)=>DAYS.forEach((d,di)=>{
+    const c=getCell(w,d);if(c.primary)return;
+    const pool=eligible(w,d,wi,di);
+    const best=pickBest(pool,d);if(!best)return;
+    c.primary=best.id;filled++;
+    if(best.pgy===5&&!c.pair){
+      const ppool=eligible(w,d,wi,di,best.id);
+      const pgy2=ppool.filter(s=>s.pgy===2);
+      const jp=pgy2.length?pgy2:ppool.filter(s=>s.pgy<5);
+      const pair=pickBest(jp,d);if(pair){c.pair=pair.id;filled++;}
+    }
+  }));
+  save();render();
+  if(filled===0)alert('No empty slots could be filled — check that residents have remaining call capacity and are not blocked.');
+}
+
+function clearSched(){if(!confirm('Clear the entire schedule for this month?'))return;snapshot();WEEKS.forEach(w=>DAYS.forEach(d=>{getCurSched()[w][d]={primary:null,pair:null,type:'',note:'',swap:false,swapWith:''};})  );save();render();}
+
+// ── Assignment ─────────────────────────────────────────────────────────────────
+function assign(week,day,sid){
+  snapshot();
+  const c=getCell(week,day);
+  const slot=activeCell?.week===week&&activeCell?.day===day?activeCell.slot:'primary';
+  if(slot==='pair'){c.pair=sid;const n=nextEmptyPrimary(week,day);activeCell=n?{week:n.week,day:n.day,slot:'primary'}:null;}
+  else{c.primary=sid;c.pair=null;const s=sbId(sid);if(s&&s.pgy===5)activeCell={week,day,slot:'pair'};else{const n=nextEmptyPrimary(week,day);activeCell=n?{week:n.week,day:n.day,slot:'primary'}:null;}}
+  save();render();
+}
+function clearC(week,day,slot){snapshot();const c=getCell(week,day);if(slot==='pair')c.pair=null;else{c.primary=null;c.pair=null;}save();render();}
+
+// ── Month nav ──────────────────────────────────────────────────────────────────
+function prevMonth(){viewM--;if(viewM<0){viewM=11;viewY--;}save();render();}
+function nextMonth(){viewM++;if(viewM>11){viewM=0;viewY++;}save();render();}
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.dataset.theme=isDark?'dark':'light';
+  document.getElementById('themBtn').textContent=isDark?'☀':'☾';
+  save();
+}
+
+// ── Export CSV ─────────────────────────────────────────────────────────────────
+function exportCSV(){
+  const rows=[['Month','Week','Day','Resident','PGY','Role','Call Type','Notes','Swap']];
+  const mName=`${MONTH_NAMES[viewM]} ${viewY}`;
+  WEEKS.forEach(w=>DAYS.forEach(d=>{
+    const c=getCell(w,d);
+    if(c.primary){const s=sbId(c.primary);rows.push([mName,w,d,s?.name||'',PL[s?.pgy||1],'Primary',ctInfo(c.type).label,c.note||'',c.swap?'Yes':'No']);}
+    if(c.pair){const s=sbId(c.pair);rows.push([mName,w,d,s?.name||'',PL[s?.pgy||1],'Pair',ctInfo(c.type).label,c.note||'',c.swap?'Yes':'No']);}
+  }));
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`call-schedule-${MONTH_NAMES[viewM]}-${viewY}.csv`;a.click();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function render(){
+  document.getElementById('monthLabel').textContent=`${MONTH_NAMES[viewM]} ${viewY}`;
+  applyFeatureFlags();
+  document.documentElement.dataset.theme=isDark?'dark':'light';
+  document.getElementById('themBtn').textContent=isDark?'☀':'☾';
+  renderBanner();renderSidebar();renderGrid();renderViol();renderSum();renderAvail();if(curTab==='resident')renderResident();
+}
+
+const BG=()=>isDark?'#07111f':'#f1f5f9';
+const BG2=()=>isDark?'#04090f':'#e8eef5';
+const BG3=()=>isDark?'#080f1c':'#ffffff';
+const BG4=()=>isDark?'#0f1a2e':'#f8fafc';
+const BDR=()=>isDark?'#0e2035':'#e2e8f0';
+const BDR2=()=>isDark?'#1e3a5f':'#cbd5e1';
+const T1=()=>isDark?'#e2e8f0':'#0f172a';
+const T2=()=>isDark?'#94a3b8':'#475569';
+const T3=()=>isDark?'#475569':'#64748b';
+const T4=()=>isDark?'#334155':'#94a3b8';
+const T5=()=>isDark?'#1e4d6b':'#93c5fd';
+
+function mkPill(txt,bg,brd,col){const d=document.createElement('div');d.style.cssText=`background:${bg};border:1px solid ${brd};border-radius:6px;padding:3px 10px;font-size:10px;color:${col};letter-spacing:.06em;cursor:pointer`;d.textContent=txt;return d;}
+
+function renderBanner(){
+  const V=violations();
+  const b=document.getElementById('banner');b.innerHTML='';
+  const e=V.filter(v=>v.type==='error'),w=V.filter(v=>v.type==='warning');
+  if(e.length){const p=mkPill(`✕ ${e.length} error${e.length>1?'s':''}`,isDark?'rgba(248,113,113,.08)':'rgba(248,113,113,.12)','rgba(248,113,113,.3)','#f87171');p.onclick=()=>setTab('violations');b.appendChild(p);}
+  if(w.length){const p=mkPill(`⚠ ${w.length} warning${w.length>1?'s':''}`,isDark?'rgba(251,191,36,.07)':'rgba(251,191,36,.12)','rgba(251,191,36,.3)','#fbbf24');p.onclick=()=>setTab('violations');b.appendChild(p);}
+  document.getElementById('t-violations').textContent='VIOLATIONS'+(V.length?` (${V.length})`:''  );
+  const sb=document.getElementById('statusBtn');if(sb){const pub=getStatus()==='published';sb.style.background=pub?'rgba(52,211,153,.12)':'rgba(251,191,36,.08)';sb.style.border='1px solid '+(pub?'rgba(52,211,153,.35)':'rgba(251,191,36,.3)');sb.style.color=pub?'#34d399':'#fbbf24';sb.textContent=pub?'✓ PUBLISHED':'● DRAFT';}
+}
+
+function renderSidebar(){
+  const pf=document.getElementById('pgyF');pf.innerHTML='';
+  const addPill=(lbl,val)=>{const b=document.createElement('button');b.textContent=lbl;const act=fPgy===val,col=val===0?'#63cab7':PC[val];b.style.cssText=`font-size:9px;padding:3px 7px;border-radius:20px;border:1px solid ${act?col:BDR()};background:${act?col+'18':'transparent'};color:${act?col:T4()};font-family:'DM Mono',monospace;cursor:pointer`;b.onclick=()=>{fPgy=fPgy===val&&val!==0?0:val;render();};pf.appendChild(b);};
+  addPill('ALL',0);[1,2,3,4,5].forEach(p=>addPill(PL[p],p));
+
+  const sl=document.getElementById('sbl');sl.innerHTML='';
+  const named=staff.filter(s=>s.name.trim());
+  const vis=fPgy===0?named:named.filter(s=>s.pgy===fPgy);
+  if(!named.length){const h=document.createElement('div');h.style.cssText=`font-size:11px;color:${T5()};padding:14px 4px;line-height:1.7`;h.innerHTML='Click <span style="color:#93c5fd">⊕ ROSTER</span><br>to add residents';sl.appendChild(h);}
+  const V=violations();const vSids=new Set(V.filter(v=>v.sid).map(v=>v.sid));
+  [1,2,3,4,5].forEach(pgy=>{
+    const grp=vis.filter(s=>s.pgy===pgy);if(!grp.length)return;
+    const sec=document.createElement('div');sec.style.marginBottom='11px';
+    const lbl=document.createElement('div');lbl.style.cssText=`font-size:8px;letter-spacing:.15em;color:${PC[pgy]};margin-bottom:5px;text-transform:uppercase;display:flex;align-items:center;gap:5px`;
+    lbl.innerHTML=`<div style="height:1px;flex:1;background:${PC[pgy]}30"></div>${PL[pgy]}<div style="height:1px;flex:1;background:${PC[pgy]}30"></div>`;sec.appendChild(lbl);
+    grp.forEach(s=>{
+      const calls=countCalls(s.id),mx=maxP(s.pgy),hasV=vSids.has(s.id);
+      const fv=cfg.showFairness?fairness(s.id):null;
+      const card=document.createElement('div');card.className='staff-card';
+      card.style.cssText=`display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-radius:7px;margin-bottom:3px;background:${BG3()};border:1px solid ${hasV?'rgba(248,113,113,.5)':BDR()}`;
+      const fTag=fv!==null?`<span style="font-size:8px;color:${fv>20?'#f87171':fv>0?'#fbbf24':'#34d399'};margin-left:2px">${fv>0?'+':''}${fv}%</span>`:'';
+      card.innerHTML=`<div style="display:flex;align-items:center;gap:5px"><div style="width:6px;height:6px;border-radius:50%;background:${PC[s.pgy]};flex-shrink:0"></div><span style="font-size:11px;color:${T1()}">${s.name.replace(/^Dr\.\s*/,'')}</span></div>
+        <div style="display:flex;align-items:center;gap:4px">${hasV?'<span style="color:#f87171;font-size:11px">!</span>':''}<span style="font-size:9px;color:${calls>0?PC[s.pgy]:T4()};min-width:28px;text-align:right">${calls>0?`${calls}/${mx}`:' — '}</span>${fTag}</div>`;
+      card.draggable=true;
+      card.addEventListener('dragstart',()=>{dragId=s.id;card.classList.add('drag');});
+      card.addEventListener('dragend',()=>{dragId=null;card.classList.remove('drag');});
+      card.addEventListener('click',()=>{if(activeCell)assign(activeCell.week,activeCell.day,s.id);});
+      sec.appendChild(card);
+    });
+    sl.appendChild(sec);
+  });
+
+  const tot=WEEKS.length*DAYS.length;
+  const filled=WEEKS.flatMap(w=>DAYS.map(d=>getCell(w,d).primary)).filter(Boolean).length;
+  const pct=Math.round(filled/tot*100);
+  let nxt=null;
+  if(activeCell){const c=getCell(activeCell.week,activeCell.day);const pr=c.primary?sbId(c.primary):null;if(activeCell.slot==='pair'&&pr?.pgy===5&&!c.pair)nxt={week:activeCell.week,day:activeCell.day,slot:'pair'};else{const n=nextEmptyPrimary(activeCell.week,activeCell.day);if(n)nxt={...n,slot:'primary'};}}
+  const m=document.getElementById('meter');
+  m.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:4px"><span style="color:${T4()};letter-spacing:.08em;text-transform:uppercase">Filled</span><span style="color:#63cab7">${filled}/${tot}</span></div>
+  <div style="height:3px;background:${BDR()};border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#1d6fa8,#63cab7);transition:width .4s;border-radius:2px"></div></div>
+  ${nxt?`<div style="margin-top:8px;padding:6px 10px;background:${isDark?'rgba(99,202,183,.05)':'rgba(99,202,183,.1)'};border:1px solid rgba(99,202,183,.25);border-radius:6px">
+    <div style="font-size:8px;color:${nxt.slot==='pair'?PC[5]:'#63cab7'};letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px">${nxt.slot==='pair'?'Pair Needed':'Next Gap'}</div>
+    <div style="font-size:10px;color:${T2()}">${nxt.week} · ${nxt.day}</div></div>`:''}`;
+}
+
+function renderGrid(){
+  const V=violations();const vCells=new Set();V.forEach(v=>(v.ckeys||[]).forEach(c=>vCells.add(c)));
+  const nxtP=activeCell?nextEmptyPrimary(activeCell.week,activeCell.day):null;
+  const pairActive=activeCell?.slot==='pair';
+  const g=document.getElementById('pGrid');g.innerHTML='';
+  // View controls bar
+  const vcBar=document.createElement('div');
+  vcBar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap';
+  vcBar.innerHTML=`<span style="font-size:9px;color:${T4()};letter-spacing:.12em;text-transform:uppercase">View</span>
+    <button id="vm-month" onclick="setViewMode('month')" style="padding:4px 11px;border-radius:6px;font-size:10px;border:1px solid ${cfg.viewMode==='month'?'#63cab7':'var(--bdr2)'};background:${cfg.viewMode==='month'?'rgba(99,202,183,.15)':'var(--bg3)'};color:${cfg.viewMode==='month'?'#63cab7':'var(--t2)'};cursor:pointer;font-family:'DM Mono',monospace">Month</button>
+    <button id="vm-week" onclick="setViewMode('week')" style="padding:4px 11px;border-radius:6px;font-size:10px;border:1px solid ${cfg.viewMode==='week'?'#63cab7':'var(--bdr2)'};background:${cfg.viewMode==='week'?'rgba(99,202,183,.15)':'var(--bg3)'};color:${cfg.viewMode==='week'?'#63cab7':'var(--t2)'};cursor:pointer;font-family:'DM Mono',monospace">Week</button>
+    <div style="width:1px;height:16px;background:var(--bdr2);margin:0 2px"></div>
+    <span style="font-size:9px;color:${T4()};letter-spacing:.12em;text-transform:uppercase">Font</span>
+    ${[['0.85','A-'],['1.0','A'],['1.15','A+'],['1.3','A++']].map(([s,l])=>`<button id="fs-${s.replace('.','')}" onclick="setFontScale(${s})" style="padding:4px 9px;border-radius:6px;font-size:${9+parseFloat(s)*2}px;border:1px solid ${Math.abs(cfg.fontScale-parseFloat(s))<0.01?'#63cab7':'var(--bdr2)'};background:${Math.abs(cfg.fontScale-parseFloat(s))<0.01?'rgba(99,202,183,.15)':'var(--bg3)'};color:${Math.abs(cfg.fontScale-parseFloat(s))<0.01?'#63cab7':'var(--t2)'};cursor:pointer;font-family:'DM Mono',monospace">${l}</button>`).join('')}
+    <div style="width:1px;height:16px;background:var(--bdr2);margin:0 2px"></div>
+    <button onclick="loadProvinceHolidays()" style="padding:4px 11px;border-radius:6px;font-size:10px;border:1px solid rgba(251,113,133,.3);background:rgba(251,113,133,.07);color:#fb7185;cursor:pointer;font-family:'DM Mono',monospace">📅 Load ${cfg.province} Holidays</button>`;
+  g.appendChild(vcBar);
+  if(cfg.viewMode==='week'){renderWeekView(g,nxtP,vCells);return;}
+  const wrap=document.createElement('div');wrap.style.overflowX='auto';
+  const tbl=document.createElement('table');tbl.style.cssText='border-collapse:separate;border-spacing:0;width:100%;min-width:540px';
+  const thead=document.createElement('thead'),hrow=document.createElement('tr');
+  const th0=document.createElement('th');th0.style.cssText=`width:68px;padding:0 0 8px;text-align:left;font-size:8px;letter-spacing:.15em;color:${T5()};text-transform:uppercase;font-weight:400`;hrow.appendChild(th0);
+  DAYS.forEach(d=>{
+    const th=document.createElement('th');
+    const isWk=WEEKEND.includes(d),noPC=NO_PC.includes(d),isAcad=ACADEMIC.includes(d);
+    const col=isAcad?'#818cf8':noPC?'#fb923c':isWk?'#6366f1':T3();
+    th.style.cssText=`padding:0 2px 8px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;text-align:center;color:${col};font-weight:400`;
+    let sub=noPC?`<div style="font-size:6px;color:${col}90;margin-top:1px">no P/C</div>`:isAcad?`<div style="font-size:6px;color:${col}90;margin-top:1px">acad</div>`:isWk?`<div style="width:3px;height:3px;border-radius:50%;background:#6366f1;margin:2px auto 0"></div>`:'';
+    th.innerHTML=d+sub;hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);tbl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  WEEKS.forEach(week=>{
+    const tr=document.createElement('tr');
+    const wlbl=document.createElement('td');wlbl.style.cssText='padding:2px 0;vertical-align:top;padding-top:7px';
+    wlbl.innerHTML=`<span style="font-size:8px;color:${T5()};letter-spacing:.1em;text-transform:uppercase">${week}</span>`;tr.appendChild(wlbl);
+    DAYS.forEach(day=>{
+      const td=document.createElement('td');td.style.cssText='padding:2px;vertical-align:top';
+      const cell=getCell(week,day);
+      const pr=cell.primary?sbId(cell.primary):null;
+      const pa=cell.pair?sbId(cell.pair):null;
+      const isPgy5=pr?.pgy===5,needsPair=isPgy5&&!cell.pair;
+      const isAP=activeCell?.week===week&&activeCell?.day===day&&activeCell?.slot==='primary';
+      const isAPA=activeCell?.week===week&&activeCell?.day===day&&activeCell?.slot==='pair';
+      const isNxtP=!cell.primary&&nxtP?.week===week&&nxtP?.day===day;
+      const isNxtPA=pairActive&&needsPair&&activeCell?.week===week&&activeCell?.day===day;
+      const isWk=WEEKEND.includes(day),noPC=NO_PC.includes(day),isAcad=ACADEMIC.includes(day);
+      const hasV=vCells.has(`${week}-${day}`);
+      const prC=pr?PC[pr.pgy]:null;
+      const paC=pa?PC[pa.pgy]:null;
+      const ct=ctInfo(cell.type);
+      const cellH=isPgy5?86:cfg.showBackup&&pr?78:64;
+
+      const div=document.createElement('div');
+      div.className='cell'+(isNxtP?' pulse':isNxtPA?' ppulse':'');
+      div.style.height=cellH+'px';div.style.minWidth='70px';
+      div.style.background=pr?prC+'10':isWk?BG2():BG3();
+      div.style.borderColor=hasV?'rgba(248,113,113,.6)':isAP?(prC||'#63cab7'):isNxtP?'rgba(99,202,183,.5)':isWk?BDR2():BDR();
+
+      if(pr){
+        if(cell.note)div.innerHTML+='<div class="note-dot"></div>';
+        if(cell.swap){const sw=document.createElement('div');sw.className='swap-ic';sw.title=cell.swapWith?`Covered by: ${sbId(cell.swapWith)?.name||'?'}`:'Swap requested';sw.textContent='⇄';div.appendChild(sw);}
+        const xb=document.createElement('button');xb.style.cssText=`position:absolute;top:2px;right:3px;background:none;border:none;color:${T4()};font-size:12px;line-height:1;padding:0;transition:color .12s`;xb.textContent='×';
+        xb.onmouseover=()=>xb.style.color='#f87171';xb.onmouseout=()=>xb.style.color=T4();
+        xb.onclick=e=>{e.stopPropagation();clearC(week,day,'primary');};div.appendChild(xb);
+        const pb=document.createElement('div');pb.style.cssText='display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;padding-top:2px';
+        pb.innerHTML=`<div style="width:6px;height:6px;border-radius:50%;background:${prC}"></div>
+          <div style="font-size:9px;color:${prC};font-weight:500;text-align:center;padding:0 4px;line-height:1.2;margin-top:1px">${pr.name.replace(/^Dr\.\s*/,'')}</div>
+          <div style="font-size:7px;color:${prC}80;letter-spacing:.04em">${PL[pr.pgy]}</div>
+          ${(ct.id&&cfg.showCallTypes)?`<div class="ct-tag" style="background:${ct.color}18;color:${ct.color};border:1px solid ${ct.color}40">${ct.id}</div>`:''}`;
+        div.appendChild(pb);
+        if(isPgy5){
+          const sep=document.createElement('div');sep.style.cssText=`width:80%;height:1px;background:${BDR2()};margin:3px auto 2px`;div.appendChild(sep);
+          if(pa){
+            const pab=document.createElement('div');pab.style.cssText='display:flex;flex-direction:column;align-items:center;gap:1px;width:100%';
+            pab.innerHTML=`<div style="width:5px;height:5px;border-radius:50%;background:${paC}"></div>
+              <div style="font-size:8px;color:${paC};text-align:center;padding:0 4px;line-height:1.2">${pa.name.replace(/^Dr\.\s*/,'')}</div>
+              <div style="font-size:7px;color:${paC}70">${PL[pa.pgy]}</div>`;
+            const xp=document.createElement('button');xp.style.cssText=`position:absolute;bottom:2px;right:3px;background:none;border:none;color:${T4()};font-size:11px;line-height:1;padding:0`;
+            xp.textContent='×';xp.onmouseover=()=>xp.style.color='#f87171';xp.onmouseout=()=>xp.style.color=T4();
+            xp.onclick=e=>{e.stopPropagation();clearC(week,day,'pair');};div.appendChild(pab);div.appendChild(xp);
+          } else {
+            const slot=document.createElement('div');
+            slot.style.cssText=`width:88%;margin:0 auto;border:1px dashed ${isNxtPA?PC[5]:BDR2()};border-radius:5px;padding:3px;text-align:center;background:${isNxtPA?PC[5]+'10':'transparent'}`;
+            slot.innerHTML=`<span style="font-size:7px;color:${isNxtPA?PC[5]:T4()};letter-spacing:.05em">+ pair (R2)</span>`;
+            slot.onclick=e=>{e.stopPropagation();activeCell={week,day,slot:'pair'};render();};
+            slot.ondragover=e=>{e.preventDefault();slot.style.background=PC[5]+'20';};
+            slot.ondragleave=()=>{slot.style.background=isNxtPA?PC[5]+'10':'transparent';};
+            slot.ondrop=e=>{e.stopPropagation();if(dragId){const was=activeCell;activeCell={week,day,slot:'pair'};assign(week,day,dragId);activeCell=was;}};
+            div.appendChild(slot);
+          }
+        }
+      } else {
+        let ico=isNxtP?'●':isWk?'◇':'+';let col=isNxtP?'#63cab7':isWk?BDR2():BDR();
+        let sub='';
+        if(noPC)sub=`<div style="font-size:6px;color:#fb923c90;margin-top:2px;letter-spacing:.04em">no P/C</div>`;
+        else if(isAcad)sub=`<div style="font-size:6px;color:#818cf890;margin-top:2px;letter-spacing:.04em">acad</div>`;
+        div.innerHTML=`<div style="font-size:${isNxtP?15:13}px;color:${col};line-height:1;margin-top:8px">${ico}</div>${sub}`;
+      }
+
+      if(hasV){const dot=document.createElement('div');dot.style.cssText='position:absolute;top:3px;left:4px;width:5px;height:5px;border-radius:50%;background:#f87171';div.appendChild(dot);}
+
+      div.addEventListener('dragover',e=>{e.preventDefault();div.style.background=isDark?'#0d1e35':'#e8f4ff';div.style.borderColor='#63cab7';});
+      div.addEventListener('dragleave',()=>{div.style.background=pr?prC+'10':isWk?BG2():BG3();div.style.borderColor=hasV?'rgba(248,113,113,.6)':isAP?(prC||'#63cab7'):isNxtP?'rgba(99,202,183,.5)':isWk?BDR2():BDR();});
+      div.addEventListener('drop',()=>{if(dragId){if(isPgy5&&!cell.pair){const was=activeCell;activeCell={week,day,slot:'pair'};assign(week,day,dragId);}else{activeCell={week,day,slot:'primary'};assign(week,day,dragId);}}});
+      // Holiday overlay
+      if(cfg.showHolidays&&isHoliday(week,day)){
+        const hl=document.createElement('div');
+        hl.style.cssText='position:absolute;inset:0;background:rgba(251,113,133,.12);border-radius:7px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;pointer-events:none';
+        hl.innerHTML='<span style="font-size:7px;color:#fb7185;letter-spacing:.04em;text-align:center;padding:0 2px">'+holidayName(week,day)+'</span>';
+        div.appendChild(hl);
+      }
+      // Backup slot (when enabled and cell has primary)
+      if(cfg.showBackup&&pr){
+        const bkSep=document.createElement('div');bkSep.style.cssText='width:80%;height:1px;background:'+BDR2()+';margin:2px auto';div.appendChild(bkSep);
+        if(cell.backup){
+          const bks=sbId(cell.backup);
+          const bkDiv=document.createElement('div');bkDiv.style.cssText='display:flex;align-items:center;gap:4px;width:100%;justify-content:center;padding:0 4px';
+          bkDiv.innerHTML='<div style="width:4px;height:4px;border-radius:50%;background:'+PC[bks.pgy]+'"></div><span style="font-size:8px;color:'+PC[bks.pgy]+'">'+bks.name.replace(/^Dr\.\s*/,'')+'</span>';
+          const xbk=document.createElement('button');xbk.style.cssText='position:absolute;bottom:2px;right:3px;background:none;border:none;color:'+T4()+';font-size:10px;line-height:1;padding:0';
+          xbk.textContent='×';xbk.onmouseover=()=>xbk.style.color='#f87171';xbk.onmouseout=()=>xbk.style.color=T4();
+          xbk.onclick=e=>{e.stopPropagation();cell.backup=null;save();render();};
+          div.appendChild(bkDiv);div.appendChild(xbk);
+        } else {
+          const bkSlot=document.createElement('div');
+          bkSlot.style.cssText='width:88%;margin:0 auto;border:1px dashed '+BDR2()+';border-radius:4px;padding:2px;text-align:center';
+          bkSlot.innerHTML='<span style="font-size:7px;color:'+T4()+'">+ backup</span>';
+          bkSlot.onclick=e=>{e.stopPropagation();activeCell={week,day,slot:'backup'};render();};
+          bkSlot.ondragover=e=>{e.preventDefault();bkSlot.style.background=PC[4]+'20';};
+          bkSlot.ondrop=e=>{e.stopPropagation();if(dragId){cell.backup=dragId;save();render();}};
+          div.appendChild(bkSlot);
+        }
+      }
+      div.addEventListener('click',()=>{
+        if(pr){openCellModal(week,day);}
+        else{if(!cell.primary)activeCell={week,day,slot:'primary'};else if(isPgy5&&!cell.pair)activeCell={week,day,slot:'pair'};render();}
+      });
+      div.addEventListener('contextmenu',e=>{e.preventDefault();if(!pr&&cfg.showHolidays)toggleHoliday(week,day);else openCellModal(week,day);});
+      if(!pr&&cell.note){const dot=document.createElement('div');dot.className='note-dot';div.appendChild(dot);}
+      td.appendChild(div);tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);wrap.appendChild(tbl);
+  const leg=document.createElement('div');leg.style.cssText='margin-top:12px;display:flex;gap:12px;flex-wrap:wrap';
+  [['#6366f1','Weekend'],['#fb923c','No post-call (Fri/Sat)'],['#818cf8','Academic day (Mon)'],['#f87171','Violation'],['#63cab7','Next empty'],['#a78bfa','Pair needed'],['#fbbf24','Has notes'],['#818cf8','Swapped'],['#fb7185','Holiday (right-click empty cell)']].forEach(([c,l])=>{
+    leg.innerHTML+=`<div style="display:flex;align-items:center;gap:4px;font-size:8px;color:${T4()}"><div style="width:5px;height:5px;border-radius:50%;background:${c}"></div>${l}</div>`;
+  });
+  wrap.appendChild(leg);g.appendChild(wrap);
+}
+
+function renderViol(){
+  const V=violations();const d=document.getElementById('pViol');d.innerHTML='';
+  const wrap=document.createElement('div');wrap.style.maxWidth='620px';
+  const lbl=document.createElement('div');lbl.style.cssText=`font-size:9px;letter-spacing:.2em;color:${T4()};margin-bottom:12px;text-transform:uppercase`;lbl.textContent='Active Rule Violations';wrap.appendChild(lbl);
+  if(!V.length){const ok=document.createElement('div');ok.style.cssText=`padding:28px;background:${isDark?'rgba(99,202,183,.05)':'rgba(99,202,183,.1)'};border:1px solid rgba(99,202,183,.2);border-radius:10px;font-size:13px;color:#63cab7;text-align:center`;ok.textContent='✓ No violations — schedule looks good';wrap.appendChild(ok);}
+  else{
+    [{type:'error',label:'Errors',col:'#f87171',bg:isDark?'rgba(248,113,113,.06)':'rgba(248,113,113,.08)',brd:'rgba(248,113,113,.25)'},
+     {type:'warning',label:'Warnings',col:'#fbbf24',bg:isDark?'rgba(251,191,36,.06)':'rgba(251,191,36,.08)',brd:'rgba(251,191,36,.25)'}].forEach(g=>{
+      const items=V.filter(v=>v.type===g.type);if(!items.length)return;
+      const sec=document.createElement('div');sec.style.marginBottom='14px';
+      const slbl=document.createElement('div');slbl.style.cssText=`font-size:9px;letter-spacing:.12em;color:${g.col};margin-bottom:7px;text-transform:uppercase`;slbl.textContent=`${g.label} (${items.length})`;sec.appendChild(slbl);
+      items.forEach(v=>{
+        const item=document.createElement('div');item.style.cssText=`padding:9px 13px;border-radius:8px;margin-bottom:5px;background:${g.bg};border:1px solid ${g.brd};display:flex;align-items:flex-start;gap:9px`;
+        const s=v.sid?sbId(v.sid):null;
+        item.innerHTML=`<span style="font-size:12px;margin-top:1px">${g.type==='error'?'✕':'⚠'}</span><div><div style="font-size:12px;color:${g.col==='#f87171'?'#fca5a5':'#fde68a'};line-height:1.4">${v.msg}</div>${s?`<div style="font-size:10px;color:${T3()};margin-top:2px">${PL[s.pgy]} · ${countCalls(s.id)} calls · ${countWknd(s.id)} wknd · fairness: ${fairness(s.id)!==null?(fairness(s.id)>0?'+':'')+fairness(s.id)+'%':'N/A'}</div>`:''}</div>`;
+        sec.appendChild(item);
+      });
+      wrap.appendChild(sec);
+    });
+  }
+  d.appendChild(wrap);
+}
+
+function renderSum(){
+  const d=document.getElementById('pSum');d.innerHTML='';
+  const wrap=document.createElement('div');wrap.style.maxWidth='680px';
+  const named=staff.filter(s=>s.name.trim());
+  const hdr=document.createElement('div');hdr.style.cssText=`font-size:9px;letter-spacing:.2em;color:${T4()};margin-bottom:14px;text-transform:uppercase`;hdr.textContent='Call Distribution & Fairness';wrap.appendChild(hdr);
+  if(!named.length){const h=document.createElement('div');h.style.cssText=`font-size:12px;color:${T4()};padding:20px 0`;h.textContent='Add residents via ⊕ ROSTER to see summary.';wrap.appendChild(h);}
+  [1,2,3,4,5].forEach(pgy=>{
+    const grp=named.filter(s=>s.pgy===pgy);if(!grp.length)return;
+    const mx=maxP(pgy);
+    const sec=document.createElement('div');sec.style.marginBottom='20px';
+    sec.innerHTML=`<div style="font-size:9px;letter-spacing:.14em;color:${PC[pgy]};margin-bottom:8px;text-transform:uppercase;display:flex;align-items:center;gap:8px">${PL[pgy]}<span style="color:${PC[pgy]}50;font-size:8px">max ${mx}/month · ${grp.length} residents</span></div>`;
+    grp.forEach(s=>{
+      const calls=countCalls(s.id),wk=countWknd(s.id);
+      const cells=resCells(s.id);const days=cells.map(c=>c.day);
+      const pct=Math.min(100,Math.round(calls/mx*100));const over=calls>mx;
+      const fv=fairness(s.id);
+      const hFSM=days.includes('Fri')&&days.includes('Sat')&&days.includes('Mon');
+      const hFS=!hFSM&&days.includes('Fri')&&days.includes('Sat');
+      const hMC=!hFSM&&days.includes('Mon')&&(days.includes('Fri')||days.includes('Sat'));
+      // Call type breakdown
+      const typeCounts={};if(cfg.showCallTypes)CALL_TYPES.slice(1).forEach(ct=>{typeCounts[ct.id]=0;});
+      cells.forEach(c=>{const t=getCell(c.week,c.day).type;if(t&&typeCounts[t]!==undefined)typeCounts[t]++;});
+      const typeStr=Object.entries(typeCounts).filter(([,v])=>v>0).map(([k,v])=>`<span style="font-size:8px;color:${ctInfo(k).color};margin-right:5px">${k}:${v}</span>`).join('');
+      let badges='';
+      if(hFSM)badges+=`<span style="font-size:8px;background:rgba(248,113,113,.15);color:#f87171;padding:1px 5px;border-radius:3px;margin-left:4px">Fri+Sat+Mon</span>`;
+      else if(hFS)badges+=`<span style="font-size:8px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 5px;border-radius:3px;margin-left:4px">Fri+Sat</span>`;
+      else if(hMC)badges+=`<span style="font-size:8px;background:rgba(251,191,36,.1);color:#fbbf24;padding:1px 5px;border-radius:3px;margin-left:4px">+Mon combo</span>`;
+      const row=document.createElement('div');
+      row.style.cssText=`display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;margin-bottom:4px;background:${BG3()};border:1px solid ${over||hFSM?'rgba(248,113,113,.3)':hFS||hMC?'rgba(251,191,36,.2)':BDR()}`;
+      const icalBtnEl=document.createElement('button');
+      icalBtnEl.style.cssText='background:rgba(99,202,183,.1);border:1px solid rgba(99,202,183,.25);color:#63cab7;border-radius:5px;padding:3px 8px;font-size:9px;flex-shrink:0;cursor:pointer';
+      icalBtnEl.textContent='↓ iCal';icalBtnEl.onclick=(()=>{const sid=s.id;return ()=>exportResidentIcal(sid);})();
+      row.innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${PC[pgy]};flex-shrink:0"></div>
+        <div style="width:115px;font-size:11px;color:${T2()};flex-shrink:0">${s.name}</div>
+        <div style="flex:1;height:4px;background:${BDR()};border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:2px;transition:width .4s;background:${over?`linear-gradient(90deg,${PC[pgy]},#f87171)`:`linear-gradient(90deg,${PC[pgy]}80,${PC[pgy]})`}"></div></div>
+        <div style="font-size:10px;color:${over?'#f87171':PC[pgy]};min-width:30px;text-align:right">${calls}/${mx}</div>
+        <div style="font-size:9px;color:${T4()};min-width:44px">${wk} wknd</div>
+        <div style="min-width:38px;text-align:right;font-size:10px;color:${fv===null?T4():fv>20?'#f87171':fv>0?'#fbbf24':'#34d399'}">${fv!==null?(fv>0?'+':'')+fv+'%':'—'}</div>
+        ${badges}`;
+      row.appendChild(icalBtnEl);
+      if(typeStr){const ts=document.createElement('div');ts.style.cssText='display:flex;flex-wrap:wrap;padding:3px 11px 6px 32px;gap:2px';ts.innerHTML=typeStr;sec.appendChild(row);sec.appendChild(ts);}else{sec.appendChild(row);}
+    });
+    wrap.appendChild(sec);
+  });
+  // Fairness legend
+  const lg=document.createElement('div');lg.style.cssText=`margin-top:8px;padding:10px 14px;background:${BG3()};border:1px solid ${BDR()};border-radius:8px;font-size:10px;color:${T3()};line-height:1.7`;
+  lg.innerHTML=`<div style="font-size:9px;letter-spacing:.12em;color:${T4()};margin-bottom:5px;text-transform:uppercase">Fairness Score Guide</div>% deviation from peer average burden (calls × day weight). <span style="color:#34d399">Green ≤ 0%</span> = at or below average · <span style="color:#fbbf24">Yellow 1–20%</span> = slightly above · <span style="color:#f87171">Red &gt;20%</span> = overloaded vs peers`;
+  wrap.appendChild(lg);
+  d.appendChild(wrap);
+}
+
+function renderAvail(){
+  const d=document.getElementById('pAvail');d.innerHTML='';
+  const named=staff.filter(s=>s.name.trim());
+  const hdr=document.createElement('div');hdr.style.cssText=`font-size:9px;letter-spacing:.2em;color:${T4()};margin-bottom:8px;text-transform:uppercase`;hdr.textContent='Resident Unavailability — click a cell to block/unblock';d.appendChild(hdr);
+  const info=document.createElement('div');info.style.cssText=`font-size:10px;color:${T3()};margin-bottom:14px;line-height:1.6`;info.innerHTML='Blocked days are shown in orange. The auto-fill algorithm and violation checks skip blocked days.<br>Use this for leave, exams, conferences, or requested days off.';d.appendChild(info);
+  if(!named.length){const h=document.createElement('div');h.style.cssText=`font-size:12px;color:${T4()};padding:10px 0`;h.textContent='Add residents via ⊕ ROSTER first.';d.appendChild(h);return;}
+  const wrap=document.createElement('div');wrap.style.overflowX='auto';
+  const tbl=document.createElement('table');tbl.style.cssText='border-collapse:separate;border-spacing:0;min-width:600px';
+  const thead=document.createElement('thead'),hrow=document.createElement('tr');
+  const nameTh=document.createElement('th');nameTh.style.cssText=`padding:0 0 8px;text-align:left;font-size:9px;color:${T3()};font-weight:400;min-width:120px`;nameTh.textContent='Resident';hrow.appendChild(nameTh);
+  WEEKS.forEach(w=>{
+    DAYS.forEach(day=>{
+      const th=document.createElement('th');
+      const isWk=WEEKEND.includes(day),noPC=NO_PC.includes(day),isAcad=ACADEMIC.includes(day);
+      const col=isAcad?'#818cf8':noPC?'#fb923c':isWk?'#6366f1':T3();
+      th.style.cssText=`padding:0 2px 8px;font-size:8px;color:${col};text-align:center;font-weight:400;letter-spacing:.06em`;
+      th.innerHTML=`<div>${day.slice(0,1)}</div><div style="font-size:7px;color:${T5()}">${w.replace('Week ','W')}</div>`;
+      hrow.appendChild(th);
+    });
+  });
+  thead.appendChild(hrow);tbl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  [1,2,3,4,5].forEach(pgy=>{
+    const grp=named.filter(s=>s.pgy===pgy);if(!grp.length)return;
+    grp.forEach(s=>{
+      const tr=document.createElement('tr');
+      const ntd=document.createElement('td');ntd.style.cssText=`padding:2px 8px 2px 0;vertical-align:middle`;
+      ntd.innerHTML=`<div style="display:flex;align-items:center;gap:5px;white-space:nowrap"><div style="width:6px;height:6px;border-radius:50%;background:${PC[pgy]};flex-shrink:0"></div><span style="font-size:11px;color:${T1()}">${s.name.replace(/^Dr\.\s*/,'')}</span><span style="font-size:8px;color:${T4()}">${PL[pgy]}</span></div>`;
+      tr.appendChild(ntd);
+      WEEKS.forEach(w=>DAYS.forEach(d=>{
+        const td=document.createElement('td');td.style.cssText='padding:2px;vertical-align:middle';
+        const isBlk=blocked(s.id,w,d);const hasSched=getCell(w,d).primary===s.id||getCell(w,d).pair===s.id;
+        const cell=document.createElement('div');
+        cell.style.cssText=`width:20px;height:20px;border-radius:4px;cursor:pointer;transition:all .12s;border:1px solid ${isBlk?'rgba(251,191,36,.4)':BDR()};background:${isBlk?'rgba(251,191,36,.15)':hasSched?PC[pgy]+'18':BG3()};display:flex;align-items:center;justify-content:center;font-size:8px`;
+        cell.textContent=isBlk?'✕':hasSched?'●':'';
+        cell.style.color=isBlk?'#fbbf24':hasSched?PC[pgy]:'transparent';
+        cell.title=isBlk?'Blocked — click to unblock':hasSched?'Assigned':hasSched?'':'Click to block';
+        cell.onclick=()=>{if(!hasSched)toggleBlock(s.id,w,d);};
+        if(hasSched)cell.style.cursor='default';
+        td.appendChild(cell);tr.appendChild(td);
+      }));
+      tbody.appendChild(tr);
+    });
+  });
+  tbl.appendChild(tbody);wrap.appendChild(tbl);d.appendChild(wrap);
+}
+
+// ── Cell Details Modal ─────────────────────────────────────────────────────────
+function openCellModal(week,day){
+  cellEditKey={week,day};
+  const c=getCell(week,day);const pr=sbId(c.primary);const pa=c.pair?sbId(c.pair):null;
+  document.getElementById('mCellTitle').textContent=`${week} · ${day}`;
+  const body=document.getElementById('mCellBody');body.innerHTML='';
+
+  // ── Empty cell: coordinator-only banner ──
+  if(!pr){
+    const banner=document.createElement('div');
+    banner.style.cssText=`padding:10px 13px;background:${isDark?'rgba(251,191,36,.07)':'rgba(251,191,36,.12)'};border:1px solid rgba(251,191,36,.25);border-radius:8px;font-size:11px;color:#fbbf24;line-height:1.5`;
+    banner.innerHTML='<span style="letter-spacing:.08em;text-transform:uppercase;font-size:9px">Coordinator Note</span><br>This slot has no resident assigned. Use the note below to flag it (e.g. "holiday weekend", "exam week — avoid R1s").';
+    body.appendChild(banner);
+  }
+
+  // ── Resident info (filled cells only) ──
+  if(pr){
+    const rInfo=document.createElement('div');rInfo.style.cssText=`display:flex;gap:10px;align-items:center;padding:10px 12px;background:${BG3()};border:1px solid ${BDR()};border-radius:8px`;
+    rInfo.innerHTML=`<div style="display:flex;flex-direction:column;gap:4px;flex:1"><div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:${PC[pr.pgy]}"></div><span style="font-size:13px;color:${T1()};font-weight:500">${pr.name}</span><span style="font-size:10px;color:${PC[pr.pgy]}">${PL[pr.pgy]}</span></div>${pa?`<div style="display:flex;align-items:center;gap:7px;padding-left:2px"><div style="width:6px;height:6px;border-radius:50%;background:${PC[pa.pgy]}"></div><span style="font-size:11px;color:${T2()}">${pa.name}</span><span style="font-size:9px;color:${PC[pa.pgy]}">${PL[pa.pgy]} (pair)</span></div>`:''}</div>`;
+    body.appendChild(rInfo);
+
+    // ── Call type (filled cells only) ──
+    const ctDiv=document.createElement('div');
+    ctDiv.innerHTML=`<div style="font-size:10px;color:${T2()};letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Call Type</div>`;
+    const ctRow=document.createElement('div');ctRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
+    CALL_TYPES.forEach(ct=>{
+      const btn=document.createElement('button');const active=c.type===ct.id;
+      btn.style.cssText=`padding:5px 12px;border-radius:6px;font-size:11px;border:1px solid ${active?ct.color:BDR2()};background:${active?ct.color+'20':BG3()};color:${active?ct.color:T3()};transition:all .15s`;
+      btn.textContent=ct.label||'None';
+      btn.onclick=()=>{c.type=ct.id;body.querySelectorAll('.ct-sel').forEach(b=>{b.style.borderColor=BDR2();b.style.background=BG3();b.style.color=T3();});btn.style.borderColor=ct.color;btn.style.background=ct.color+'20';btn.style.color=ct.color;};
+      btn.classList.add('ct-sel');ctRow.appendChild(btn);
+    });
+    ctDiv.appendChild(ctRow);body.appendChild(ctDiv);
+
+    // ── Swap / covered-by ──
+    const swapWrap=document.createElement('div');swapWrap.style.cssText=`background:${BG3()};border:1px solid ${BDR()};border-radius:8px;overflow:hidden`;
+    const swapRow=document.createElement('div');swapRow.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:10px 13px';
+    const tgl=document.createElement('div');tgl.className='tgl';tgl.id='swapTgl';
+    tgl.innerHTML=`<div class="tgl-d" id="swapDot" style="left:${c.swap?'20px':'3px'}"></div>`;
+    tgl.style.background=c.swap?'#818cf8':BDR2();
+    const covRow=document.createElement('div');
+    covRow.id='covRow';
+    covRow.style.cssText=`padding:8px 13px 12px;border-top:1px solid ${BDR()};display:${c.swap?'block':'none'}`;
+    covRow.innerHTML=`<div style="font-size:10px;color:${T2()};letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Covered by</div>`;
+    const covSel=document.createElement('select');covSel.id='covSel';covSel.style.cssText='width:100%;font-size:12px;padding:7px 10px';
+    const blankOpt=document.createElement('option');blankOpt.value='';blankOpt.textContent='— select resident —';covSel.appendChild(blankOpt);
+    staff.filter(s=>s.name.trim()&&s.id!==c.primary&&s.id!==c.pair).forEach(s=>{
+      const o=document.createElement('option');o.value=s.id;o.textContent=`${s.name} (${PL[s.pgy]})`;
+      if(c.swapWith===s.id)o.selected=true;
+      covSel.appendChild(o);
+    });
+    covRow.appendChild(covSel);
+    tgl.onclick=()=>{
+      const on=tgl.style.background==='#818cf8';
+      tgl.style.background=on?BDR2():'#818cf8';
+      document.getElementById('swapDot').style.left=on?'3px':'20px';
+      document.getElementById('covRow').style.display=on?'none':'block';
+    };
+    swapRow.innerHTML=`<div><div style="font-size:12px;color:${T1()}">Call Swap / Trade</div><div style="font-size:10px;color:${T3()};margin-top:2px">Mark as swapped and select who covers</div></div>`;
+    swapRow.appendChild(tgl);swapWrap.appendChild(swapRow);swapWrap.appendChild(covRow);body.appendChild(swapWrap);
+  }
+
+  // ── Notes (all cells) ──
+  const notesDiv=document.createElement('div');
+  notesDiv.innerHTML=`<div style="font-size:10px;color:${T2()};letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">${pr?'Notes':'Coordinator Note'}</div>`;
+  const ta=document.createElement('textarea');ta.id='cellNote';ta.value=c.note||'';
+  ta.placeholder=pr?'Add note for this call slot...':'Flag this slot, e.g. "Holiday weekend", "Exam week — avoid R1s"';
+  ta.style.cssText=`width:100%;height:${pr?70:90}px;resize:none;font-size:12px;line-height:1.5`;
+  notesDiv.appendChild(ta);body.appendChild(notesDiv);
+  openM('mCell');
+}
+
+function saveCellDetails(){
+  if(!cellEditKey)return;
+  snapshot();
+  const{week,day}=cellEditKey;const c=getCell(week,day);
+  c.note=document.getElementById('cellNote')?.value||'';
+  c.swap=document.getElementById('swapTgl')?.style.background==='#818cf8';
+  c.swapWith=document.getElementById('covSel')?.value||'';
+  // type saved on click
+  save();closeM('mCell');render();
+}
+
+// ── Settings modals ────────────────────────────────────────────────────────────
+function openM(id){
+  if(id==='mStaff'){tmpStaff=staff.map(s=>({...s}));renderSM();}
+  else if(id==='mRules'){document.getElementById('r12').value=cfg.max12;document.getElementById('v12').textContent=cfg.max12;document.getElementById('r35').value=cfg.max35;document.getElementById('v35').textContent=cfg.max35;if(document.getElementById('rDur')){document.getElementById('rDur').value=cfg.callDuration;document.getElementById('vDur').textContent=cfg.callDuration+'h';}tmpMD=cfg.minGap;tmpWK=cfg.wkndCheck;tmpQ3=cfg.acgmeQ3;tmpBK=cfg.showBackup;setSTab('rules');renderMD();renderSettingToggles();const ps=document.getElementById('provSel');if(ps)ps.value=cfg.province||'SK';}
+  document.getElementById(id).classList.add('open');
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+
+function renderSM(){
+  const pills=document.getElementById('msPills');pills.innerHTML='';
+  [1,2,3,4,5].forEach(p=>{const cnt=tmpStaff.filter(s=>s.pgy===p).length;if(!cnt)return;const sp=document.createElement('span');sp.style.cssText=`font-size:9px;padding:2px 8px;border-radius:20px;background:${PC[p]}18;color:${PC[p]};border:1px solid ${PC[p]}40`;sp.textContent=`${PL[p]} · ${cnt}`;pills.appendChild(sp);});
+  const body=document.getElementById('msBody');body.innerHTML='';
+  [1,2,3,4,5].forEach(pgy=>{
+    const grp=tmpStaff.filter(s=>s.pgy===pgy);if(!grp.length)return;
+    const sec=document.createElement('div');sec.style.marginBottom='14px';
+    const lbl=document.createElement('div');lbl.style.cssText=`font-size:9px;letter-spacing:.14em;color:${PC[pgy]};margin-bottom:6px;text-transform:uppercase`;lbl.textContent=PL[pgy];sec.appendChild(lbl);
+    grp.forEach(s=>{
+      const row=document.createElement('div');row.style.cssText='display:flex;gap:7px;align-items:center;margin-bottom:5px';
+      const dot=document.createElement('div');dot.style.cssText=`width:6px;height:6px;border-radius:50%;background:${PC[s.pgy]};flex-shrink:0`;
+      const inp=document.createElement('input');inp.value=s.name;inp.placeholder='Dr. Last Name';inp.style.cssText='flex:1;font-size:12px';
+      inp.oninput=()=>{const i=tmpStaff.findIndex(x=>x.id===s.id);if(i>-1)tmpStaff[i].name=inp.value;setTimeout(renderSM,0);};
+      const sel=document.createElement('select');sel.style.cssText='font-size:11px;padding:6px 7px';
+      [1,2,3,4,5].forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=PL[p];if(p===s.pgy)o.selected=true;sel.appendChild(o);});
+      sel.onchange=()=>{const i=tmpStaff.findIndex(x=>x.id===s.id);if(i>-1)tmpStaff[i].pgy=Number(sel.value);renderSM();};
+      const rm=document.createElement('button');rm.style.cssText=`background:none;border:none;color:${T4()};font-size:15px;padding:0 3px;line-height:1`;rm.textContent='×';rm.onmouseover=()=>rm.style.color='#f87171';rm.onmouseout=()=>rm.style.color=T4();rm.onclick=()=>{tmpStaff=tmpStaff.filter(x=>x.id!==s.id);renderSM();};
+      row.appendChild(dot);row.appendChild(inp);row.appendChild(sel);row.appendChild(rm);sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  });
+  const add=document.createElement('button');add.className='btn-g';add.style.cssText='width:100%;margin-top:4px;border-style:dashed;font-size:11px;padding:8px';add.textContent='+ Add Resident';add.onclick=()=>{tmpStaff.push({id:mkId(),name:'',pgy:1});renderSM();};body.appendChild(add);
+}
+function saveStaff(){staff=tmpStaff.filter(s=>s.name.trim());const ids=new Set(staff.map(s=>s.id));WEEKS.forEach(w=>DAYS.forEach(d=>{const c=getCell(w,d);if(c.primary&&!ids.has(c.primary)){c.primary=null;c.pair=null;}else if(c.pair&&!ids.has(c.pair))c.pair=null;}));save();closeM('mStaff');render();}
+
+function setSTab(t){
+  ['rules','features','interface'].forEach(s=>{
+    const btn=document.getElementById('st-'+s);
+    const tab=document.getElementById('sTab-'+s);
+    if(!btn||!tab)return;
+    const on=s===t;
+    btn.style.color=on?'#63cab7':'var(--t3)';
+    btn.style.borderBottomColor=on?'#63cab7':'transparent';
+    tab.style.display=on?'flex':'none';
+  });
+}
+
+function togF(key,tglId,dotId){
+  cfg[key]=!cfg[key];
+  const t=document.getElementById(tglId),d=document.getElementById(dotId);
+  if(t){t.style.background=cfg[key]?'#63cab7':'var(--bdr2)';d.style.left=cfg[key]?'20px':'3px';}
+  applyFeatureFlags();save();
+}
+
+function renderSettingToggles(){
+  const flags=[
+    ['showAutoFill','afTgl','afDot'],['showPatternFill','pfTgl','pfDot'],
+    ['showBackup','bkTgl','bkDot'],['showHolidays','hlTgl','hlDot'],
+    ['showCallTypes','ctTgl','ctDot'],['showFairness','fsTgl','fsDot'],
+    ['showCSV','csvTgl','csvDot'],['showPrint','prTgl','prDot'],
+    ['showAI','aiTgl','aiDot'],['showAvailTab','avTgl','avDot'],
+    ['showResidentTab','rvTgl','rvDot'],
+    ['wkndCheck','wkTgl','wkDot'],['acgmeQ3','q3Tgl','q3Dot'],
+  ];
+  flags.forEach(([key,tId,dId])=>{
+    const t=document.getElementById(tId),d=document.getElementById(dId);
+    if(t&&d){t.style.background=cfg[key]?'#63cab7':'var(--bdr2)';d.style.left=cfg[key]?'20px':'3px';}
+  });
+  // Dark mode toggle
+  const dm=document.getElementById('dmTgl'),dmd=document.getElementById('dmDot');
+  if(dm&&dmd){dm.style.background=isDark?'#63cab7':'var(--bdr2)';dmd.style.left=isDark?'20px':'3px';}
+}
+
+function applyFeatureFlags(){
+  const show=(id,vis)=>{const el=document.getElementById(id);if(el)el.style.display=vis?'':'none';};
+  show('aiBtnTop',cfg.showAI);
+  show('aiPanel',cfg.showAI&&aiOpen);
+  // Auto-fill button
+  const afBtn=document.querySelector('button[onclick="autoFill()"]');
+  if(afBtn)afBtn.style.display=cfg.showAutoFill?'':'none';
+  // Pattern fill button
+  const pfBtn=document.querySelector('button[onclick="openPatternFill()"]');
+  if(pfBtn)pfBtn.style.display=cfg.showPatternFill?'':'none';
+  // CSV button
+  const csvBtn=document.querySelector('button[onclick="exportCSV()"]');
+  if(csvBtn)csvBtn.style.display=cfg.showCSV?'':'none';
+  // Print button
+  const pBtn=document.querySelector('button[onclick="window.print()"]');
+  if(pBtn)pBtn.style.display=cfg.showPrint?'':'none';
+  // Tabs
+  show('t-avail',cfg.showAvailTab);
+  show('t-resident',cfg.showResidentTab);
+}
+
+function selMD(v){tmpMD=v;renderMD();}
+function togQ3(){tmpQ3=!tmpQ3;renderQ3();}
+function renderQ3(){const t=document.getElementById('q3Tgl');const d=document.getElementById('q3Dot');if(t&&d){t.style.background=tmpQ3?'#63cab7':BDR2();d.style.left=tmpQ3?'20px':'3px';}}
+function togBK(){cfg.showBackup=!cfg.showBackup;tmpBK=cfg.showBackup;renderBK();applyFeatureFlags();save();}
+function renderBK(){const t=document.getElementById('bkTgl');const d=document.getElementById('bkDot');if(t&&d){t.style.background=(cfg.showBackup||tmpBK)?'#63cab7':BDR2();d.style.left=(cfg.showBackup||tmpBK)?'20px':'3px';}}
+function renderMD(){document.querySelectorAll('.md-btn').forEach(b=>{const v=Number(b.dataset.v),act=v===tmpMD;b.style.background=act?'rgba(99,202,183,.15)':BG3();b.style.borderColor=act?'#63cab7':BDR2();b.style.color=act?'#63cab7':T3();});}
+function togWK(){tmpWK=!tmpWK;renderWT();}
+function renderWT(){document.getElementById('wkTgl').style.background=tmpWK?'#63cab7':BDR2();document.getElementById('wkDot').style.left=tmpWK?'20px':'3px';}
+function saveRules(){cfg.max12=Number(document.getElementById('r12').value);cfg.max35=Number(document.getElementById('r35').value);if(document.getElementById('rDur'))cfg.callDuration=Number(document.getElementById('rDur').value);cfg.minGap=tmpMD;cfg.wkndCheck=tmpWK;cfg.acgmeQ3=tmpQ3;cfg.showBackup=tmpBK;save();applyFeatureFlags();closeM('mRules');render();}
+
+// ── Tab ────────────────────────────────────────────────────────────────────────
+function setTab(t){curTab=t;['grid','violations','summary','avail','resident'].forEach(x=>{document.getElementById('t-'+x)&&document.getElementById('t-'+x).classList.toggle('on',x===t);const abbr={grid:'Grid',violations:'Viol',summary:'Sum',avail:'Avail',resident:'Resident'};const el=document.getElementById('p'+abbr[x]);if(el)el.style.display=x===t?'block':'none';});if(t==='resident')renderResident();}
+
+
+// ── iCal Export ───────────────────────────────────────────────────────────────
+function cellDate(weekIdx,dayIdx){
+  const first=new Date(viewY,viewM,1);
+  const dow=first.getDay(); // 0=Sun, 1=Mon...
+  // Monday of the week containing the 1st (may be in previous month)
+  const offsetToMon=(dow===0?-6:1-dow);
+  const firstMon=new Date(viewY,viewM,1+offsetToMon);
+  const d=new Date(firstMon);d.setDate(firstMon.getDate()+weekIdx*7+dayIdx);return d;
+}
+function icalDate(d){return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
+function exportResidentIcal(staffId){
+  const s=sbId(staffId);if(!s)return;
+  const cells=resCells(staffId);
+  let ic='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Call Scheduler//EN\r\nCALSCALE:GREGORIAN\r\n';
+  cells.forEach(c=>{
+    const d=cellDate(c.wi,DAYS.indexOf(c.day));
+    const d2=new Date(d);d2.setDate(d.getDate()+1);
+    const cell=getCell(c.week,c.day);
+    const ct=cell.type?(' ['+cell.type+']'):'';
+    const note=cell.note?('\\n'+cell.note):'';
+    const uid='call-'+viewY+'-'+(viewM+1)+'-'+c.wi+'-'+DAYS.indexOf(c.day)+'-'+staffId+'@cs';
+    const dtstamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    ic+='BEGIN:VEVENT\r\nUID:'+uid+'\r\nDTSTAMP:'+dtstamp+'\r\nDTSTART;VALUE=DATE:'+icalDate(d)+'\r\nDTEND;VALUE=DATE:'+icalDate(d2)+'\r\nSUMMARY:On Call'+ct+'\r\nDESCRIPTION:'+c.week+' '+c.day+note+'\r\nEND:VEVENT\r\n';
+  });
+  ic+='END:VCALENDAR';
+  const a=document.createElement('a');
+  a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ic);
+  a.download=s.name.replace(/\s+/g,'-')+'-'+MONTH_NAMES[viewM]+'-'+viewY+'.ics';
+  a.click();
+}
+
+// ── Pattern Fill ──────────────────────────────────────────────────────────────
+function openPatternFill(){
+  const body=document.getElementById('patBody');body.innerHTML='';
+  // Resident select
+  const named=staff.filter(s=>s.name.trim());
+  let html='<div style="margin-bottom:14px"><label style="font-size:10px;color:'+T2()+';letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">Resident</label>';
+  html+='<select id="patRes" style="width:100%;font-size:12px;padding:7px 10px">';
+  named.forEach(s=>{html+='<option value="'+s.id+'">'+s.name+' ('+PL[s.pgy]+')</option>';});
+  html+='</select></div>';
+  // Pattern
+  html+='<div style="margin-bottom:14px"><label style="font-size:10px;color:'+T2()+';letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">Pattern</label>';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  [['Q2','Every 2nd night'],['Q3','Every 3rd night'],['Q4','Every 4th night'],['Q5','Every 5th night'],['Q6','Every 6th night'],['Q7','Weekly']].forEach(([id,lbl],i)=>{
+    html+='<button class="pat-btn" data-v="'+id+'" onclick="selPat(this)" style="padding:6px 12px;border-radius:6px;font-size:11px;border:1px solid '+(i===1?'#63cab7':'var(--bdr2)')+';background:'+(i===1?'rgba(99,202,183,.15)':'var(--bg3)')+';color:'+(i===1?'#63cab7':'var(--t3)')+'">'+id+'<div style="font-size:8px;opacity:.7">'+lbl+'</div></button>';
+  });
+  html+='</div></div>';
+  // Start
+  html+='<div style="display:flex;gap:10px"><div style="flex:1"><label style="font-size:10px;color:'+T2()+';letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">Start Week</label>';
+  html+='<select id="patWk" style="width:100%;font-size:12px;padding:7px 10px">';
+  WEEKS.forEach(w=>{html+='<option>'+w+'</option>';});
+  html+='</select></div><div style="flex:1"><label style="font-size:10px;color:'+T2()+';letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px">Start Day</label>';
+  html+='<select id="patDay" style="width:100%;font-size:12px;padding:7px 10px">';
+  DAYS.forEach(d=>{html+='<option>'+d+'</option>';});
+  html+='</select></div></div>';
+  body.innerHTML=html;
+  openM('mPattern');
+}
+function selPat(btn){
+  document.querySelectorAll('.pat-btn').forEach(b=>{b.style.borderColor='var(--bdr2)';b.style.background='var(--bg3)';b.style.color='var(--t3)';});
+  btn.style.borderColor='#63cab7';btn.style.background='rgba(99,202,183,.15)';btn.style.color='#63cab7';
+}
+function applyPattern(){
+  const sid=document.getElementById('patRes')?.value;
+  const patBtn=document.querySelector('.pat-btn[style*="#63cab7"]');
+  const interval=patBtn?parseInt(patBtn.dataset.v.replace('Q','')):3;
+  const startWk=document.getElementById('patWk')?.value||WEEKS[0];
+  const startDay=document.getElementById('patDay')?.value||DAYS[0];
+  if(!sid){alert('Please select a resident');return;}
+  snapshot();
+  let cursor=WEEKS.indexOf(startWk)*7+DAYS.indexOf(startDay);
+  let filled=0;
+  while(cursor<WEEKS.length*7){
+    const w=WEEKS[Math.floor(cursor/7)],d=DAYS[cursor%7];
+    const cell=getCell(w,d);
+    if(!cell.primary&&!blocked(sid,w,d)&&!isHoliday(w,d)){
+      cell.primary=sid;filled++;
+    }
+    cursor+=interval;
+  }
+  save();closeM('mPattern');render();
+  if(filled===0)alert('No slots could be filled with this pattern.');
+}
+
+// ── Resident View ─────────────────────────────────────────────────────────────
+function renderResident(){
+  const d=document.getElementById('pResident');if(!d)return;d.innerHTML='';
+  const named=staff.filter(s=>s.name.trim());
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap';
+  hdr.innerHTML='<div style="font-size:9px;letter-spacing:.2em;color:'+T4()+';text-transform:uppercase">Resident Schedule Card</div>';
+  const sel=document.createElement('select');sel.id='resViewSel';sel.style.cssText='font-size:12px;padding:6px 10px;border-radius:6px';
+  named.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name+' ('+PL[s.pgy]+')';sel.appendChild(o);});
+  sel.onchange=renderResident;
+  const printBtn=document.createElement('button');
+  printBtn.className='btn-c no-print';printBtn.textContent='⎙ Print Card';printBtn.onclick=()=>window.print();
+  const icalBtn=document.createElement('button');
+  icalBtn.className='btn-g no-print';icalBtn.textContent='↓ iCal';
+  icalBtn.onclick=()=>{const sid=document.getElementById('resViewSel')?.value;if(sid)exportResidentIcal(sid);};
+  hdr.appendChild(sel);hdr.appendChild(icalBtn);hdr.appendChild(printBtn);d.appendChild(hdr);
+
+  const sid=sel.value;if(!sid)return;
+  const s=sbId(sid);if(!s)return;
+  const cells=resCells(sid);
+  const totalCalls=cells.length,mx=maxP(s.pgy),wkndCalls=countWknd(sid);
+  const fv=fairness(sid);
+
+  // Summary card
+  const card=document.createElement('div');
+  card.style.cssText='background:'+BG3()+';border:1px solid '+BDR()+';border-radius:12px;padding:18px 20px;margin-bottom:18px;max-width:480px';
+  card.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="width:12px;height:12px;border-radius:50%;background:'+PC[s.pgy]+'"></div><div><div style="font-size:16px;font-weight:700;color:'+T1()+'">'+s.name+'</div><div style="font-size:11px;color:'+PC[s.pgy]+'">'+PL[s.pgy]+' · '+MONTH_NAMES[viewM]+' '+viewY+'</div></div></div>'
+    +'<div style="display:flex;gap:20px;flex-wrap:wrap">'
+    +'<div><div style="font-size:22px;font-weight:700;color:'+PC[s.pgy]+'">'+totalCalls+'</div><div style="font-size:10px;color:'+T3()+'">of '+mx+' calls</div></div>'
+    +'<div><div style="font-size:22px;font-weight:700;color:'+(wkndCalls>1?'#f87171':'#34d399')+'">'+wkndCalls+'</div><div style="font-size:10px;color:'+T3()+'">weekend call'+( wkndCalls===1?'':'s')+'</div></div>'
+    +(fv!==null?'<div><div style="font-size:22px;font-weight:700;color:'+(fv>20?'#f87171':fv>0?'#fbbf24':'#34d399')+'">'+(fv>0?'+':'')+fv+'%</div><div style="font-size:10px;color:'+T3()+'">vs peers</div></div>':'')
+    +'</div>';
+  d.appendChild(card);
+
+  if(!cells.length){const empty=document.createElement('div');empty.style.cssText='color:'+T4()+';font-size:13px;padding:10px 0';empty.textContent='No calls assigned this month.';d.appendChild(empty);return;}
+
+  // Call list
+  const listHdr=document.createElement('div');listHdr.style.cssText='font-size:9px;letter-spacing:.2em;color:'+T4()+';text-transform:uppercase;margin-bottom:10px';listHdr.textContent='Call Schedule';d.appendChild(listHdr);
+  const sorted=[...cells].sort((a,b)=>gIdx(a.wi,a.di)-gIdx(b.wi,b.di));
+  sorted.forEach(c=>{
+    const cell=getCell(c.week,c.day);
+    const ct=ctInfo(cell.type);
+    const isWk=WEEKEND.includes(c.day),nopc=NO_PC.includes(c.day),isAcad=ACADEMIC.includes(c.day);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;margin-bottom:5px;background:'+BG3()+';border:1px solid '+BDR();
+    const cd=cellDate(c.wi,DAYS.indexOf(c.day));
+    const dateStr=cd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+    let badges='';
+    if(isWk)badges+='<span style="font-size:8px;background:rgba(99,102,241,.15);color:#6366f1;padding:1px 5px;border-radius:3px">WKND</span>';
+    if(nopc)badges+='<span style="font-size:8px;background:rgba(251,146,60,.15);color:#fb923c;padding:1px 5px;border-radius:3px">no P/C</span>';
+    if(isAcad)badges+='<span style="font-size:8px;background:rgba(129,140,248,.15);color:#818cf8;padding:1px 5px;border-radius:3px">acad</span>';
+    if(cell.swap)badges+='<span style="font-size:8px;background:rgba(129,140,248,.15);color:#818cf8;padding:1px 5px;border-radius:3px">⇄ swap</span>';
+    if(isHoliday(c.week,c.day))badges+='<span style="font-size:8px;background:rgba(251,113,133,.15);color:#fb7185;padding:1px 5px;border-radius:3px">'+holidayName(c.week,c.day)+'</span>';
+    row.innerHTML='<div style="width:7px;height:7px;border-radius:50%;background:'+PC[s.pgy]+';flex-shrink:0"></div>'
+      +'<div style="flex:1"><div style="font-size:12px;color:'+T1()+'">'+dateStr+'</div><div style="font-size:10px;color:'+T3()+'">'+c.week+' · '+c.day+'</div></div>'
+      +(ct.id?'<div style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+ct.color+'18;color:'+ct.color+';border:1px solid '+ct.color+'40">'+ct.label+'</div>':'')
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap">'+badges+'</div>'
+      +(cell.note?'<div style="font-size:10px;color:'+T3()+';font-style:italic;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+cell.note+'">'+cell.note+'</div>':'');
+    d.appendChild(row);
+  });
+}
+
+
+// ── Font Scale ────────────────────────────────────────────────────────────────
+function setFontScale(s){
+  cfg.fontScale=s;
+  // Use transform for cross-browser support (zoom not standard in all browsers)
+  document.body.style.transform=s===1||s==='1'?'none':'scale('+s+')';
+  document.body.style.transformOrigin='top left';
+  document.body.style.width=s===1||s==='1'?'':(100/s)+'%';
+  save();updateFontBtns();
+}
+function updateFontBtns(){
+  ['0.85','1.0','1.15','1.3'].forEach(s=>{
+    const b=document.getElementById('fs-'+s.replace('.',''));
+    if(b){const on=Math.abs(cfg.fontScale-parseFloat(s))<0.01;b.style.background=on?'rgba(99,202,183,.2)':'var(--bg3)';b.style.color=on?'#63cab7':'var(--t2)';b.style.borderColor=on?'#63cab7':'var(--bdr2)';}
+  });
+}
+
+// ── View Mode ─────────────────────────────────────────────────────────────────
+function setViewMode(mode){cfg.viewMode=mode;save();renderGrid();updateViewBtns();}
+function updateViewBtns(){
+  ['month','week'].forEach(m=>{
+    const b=document.getElementById('vm-'+m);
+    if(b){const on=cfg.viewMode===m;b.style.background=on?'rgba(99,202,183,.15)':'var(--bg3)';b.style.color=on?'#63cab7':'var(--t2)';b.style.borderColor=on?'#63cab7':'var(--bdr2)';}
+  });
+}
+function prevViewWeek(){if(cfg.viewWeek>0){cfg.viewWeek--;save();renderGrid();}}
+function nextViewWeek(){if(cfg.viewWeek<WEEKS.length-1){cfg.viewWeek++;save();renderGrid();}}
+
+// ── Province Holiday Engine ───────────────────────────────────────────────────
+function calcEaster(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4;
+  const f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);
+  const mo=Math.floor((h+l-7*m+114)/31),dy=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,dy);
+}
+function nthWD(y,mo,n,wd){const f=new Date(y,mo,1);let d=1+((wd-f.getDay()+7)%7);d+=(n-1)*7;return new Date(y,mo,d);}
+function lastWDBefore(y,mo,day,wd){const d=new Date(y,mo,day);const diff=(d.getDay()-wd+7)%7;d.setDate(d.getDate()-diff);return d;}
+
+const PROVINCE_HOLIDAYS = {
+  SK: y=>{
+    const e=calcEaster(y),gf=new Date(e);gf.setDate(e.getDate()-2);
+    return [
+      {d:new Date(y,0,1),n:"New Year's Day"},
+      {d:nthWD(y,1,3,1),n:"Family Day"},
+      {d:gf,n:"Good Friday"},
+      {d:lastWDBefore(y,4,25,1),n:"Victoria Day"},
+      {d:new Date(y,6,1),n:"Canada Day"},
+      {d:nthWD(y,7,1,1),n:"Civic Holiday"},
+      {d:nthWD(y,8,1,1),n:"Labour Day"},
+      {d:new Date(y,8,30),n:"Truth & Reconciliation Day"},
+      {d:nthWD(y,9,2,1),n:"Thanksgiving"},
+      {d:new Date(y,10,11),n:"Remembrance Day"},
+      {d:new Date(y,11,25),n:"Christmas Day"},
+    ];
+  },
+  ON: y=>{
+    const e=calcEaster(y),gf=new Date(e);gf.setDate(e.getDate()-2);
+    const em=new Date(e);em.setDate(e.getDate()+1);
+    return [
+      {d:new Date(y,0,1),n:"New Year's Day"},
+      {d:nthWD(y,1,3,1),n:"Family Day"},
+      {d:gf,n:"Good Friday"},
+      {d:em,n:"Easter Monday"},
+      {d:lastWDBefore(y,4,25,1),n:"Victoria Day"},
+      {d:new Date(y,6,1),n:"Canada Day"},
+      {d:nthWD(y,7,1,1),n:"Civic Holiday"},
+      {d:nthWD(y,8,1,1),n:"Labour Day"},
+      {d:new Date(y,8,30),n:"Truth & Reconciliation Day"},
+      {d:nthWD(y,9,2,1),n:"Thanksgiving"},
+      {d:new Date(y,11,25),n:"Christmas Day"},
+      {d:new Date(y,11,26),n:"Boxing Day"},
+    ];
+  }
+};
+PROVINCE_HOLIDAYS.AB=PROVINCE_HOLIDAYS.BC=PROVINCE_HOLIDAYS.MB=PROVINCE_HOLIDAYS.SK;
+
+function loadProvinceHolidays(){
+  const fn=PROVINCE_HOLIDAYS[cfg.province]||PROVINCE_HOLIDAYS.SK;
+  const holidays=fn(viewY);
+  if(!allHolidays[hKey()])allHolidays[hKey()]={};
+  let loaded=0;
+  holidays.forEach(h=>{
+    if(h.d.getMonth()!==viewM)return;
+    const wd=h.d.getDay();
+    const dayIdx=wd===0?6:wd-1;
+    const dayName=DAYS[dayIdx];
+    // Find which week this date falls in
+    const firstOfMonth=new Date(viewY,viewM,1);
+    const dow=firstOfMonth.getDay();
+    const offsetToMon=(dow===0?-6:1-dow);
+    const firstMon=new Date(viewY,viewM,1+offsetToMon);
+    const diff=Math.floor((h.d-firstMon)/(86400000));
+    if(diff<0||diff>=28)return;
+    const wi=Math.floor(diff/7);
+    const week=WEEKS[wi];
+    const key=week+'-'+dayName;
+    allHolidays[hKey()][key]=h.n;loaded++;
+  });
+  save();render();
+  alert('Loaded '+loaded+' '+cfg.province+' holiday'+(loaded!==1?'s':'')+' for '+MONTH_NAMES[viewM]+' '+viewY+'.');
+}
+
+// ── Week View ──────────────────────────────────────────────────────────────────
+function renderWeekView(container,nxtP,vCells){
+  const wk=WEEKS[cfg.viewWeek]||WEEKS[0];
+  const wkIdx=WEEKS.indexOf(wk);
+  // Week nav
+  const nav=document.createElement('div');
+  nav.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:12px';
+  nav.innerHTML=`<button onclick="prevViewWeek()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer">&#8249;</button>
+    <span style="font-size:14px;font-weight:600;color:var(--t1);min-width:70px;text-align:center">${wk}</span>
+    <button onclick="nextViewWeek()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer">&#8250;</button>
+    <span style="font-size:10px;color:var(--t3)">${MONTH_NAMES[viewM]} ${viewY}</span>`;
+  container.appendChild(nav);
+  // 7 day cards
+  const row=document.createElement('div');
+  row.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);gap:8px;';
+  DAYS.forEach((day,di)=>{
+    const cell=getCell(wk,day);
+    const pr=cell.primary?sbId(cell.primary):null;
+    const pa=cell.pair?sbId(cell.pair):null;
+    const bk=cfg.showBackup&&cell.backup?sbId(cell.backup):null;
+    const isWk=WEEKEND.includes(day),noPC=NO_PC.includes(day),isAcad=ACADEMIC.includes(day);
+    const cd=cellDate(wkIdx,di);
+    const dateStr=cd.getDate();
+    const prC=pr?PC[pr.pgy]:null;
+    const hasV=vCells.has(wk+'-'+day);
+    const isHol=cfg.showHolidays&&isHoliday(wk,day);
+    const card=document.createElement('div');
+    card.style.cssText=`border-radius:10px;border:1px solid ${hasV?'rgba(248,113,113,.5)':isWk?'var(--bdr2)':'var(--bdr)'};background:${pr?prC+'12':isHol?'rgba(251,113,133,.08)':isWk?'var(--bg2)':'var(--bg3)'};padding:10px;min-height:120px;cursor:pointer;position:relative;transition:all .15s`;
+    const dayCol=isAcad?'#818cf8':noPC?'#fb923c':isWk?'#6366f1':'var(--t3)';
+    let inner=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div><div style="font-size:11px;font-weight:600;color:${dayCol}">${day}</div><div style="font-size:18px;font-weight:700;color:var(--t1);line-height:1">${dateStr}</div></div>
+      ${noPC?`<span style="font-size:8px;background:rgba(251,146,60,.15);color:#fb923c;padding:1px 5px;border-radius:3px">no P/C</span>`:isAcad?`<span style="font-size:8px;background:rgba(129,140,248,.15);color:#818cf8;padding:1px 5px;border-radius:3px">acad</span>`:''}
+    </div>`;
+    if(isHol){inner+=`<div style="font-size:10px;color:#fb7185;margin-bottom:6px;font-weight:500">🏖 ${holidayName(wk,day)}</div>`;}
+    if(pr){
+      const ct=ctInfo(cell.type);
+      inner+=`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px"><div style="width:8px;height:8px;border-radius:50%;background:${prC};flex-shrink:0"></div><div><div style="font-size:12px;font-weight:600;color:${prC}">${pr.name}</div><div style="font-size:10px;color:var(--t3)">${PL[pr.pgy]}</div></div></div>`;
+      if(ct.id&&cfg.showCallTypes)inner+=`<div style="font-size:9px;padding:2px 7px;border-radius:4px;background:${ct.color}18;color:${ct.color};border:1px solid ${ct.color}40;display:inline-block;margin-bottom:4px">${ct.label}</div>`;
+      if(pa)inner+=`<div style="font-size:10px;color:${PC[pa.pgy]};padding-top:4px;border-top:1px solid var(--bdr);margin-top:4px">Pair: ${pa.name}</div>`;
+      if(bk)inner+=`<div style="font-size:10px;color:${PC[bk.pgy]}">Backup: ${bk.name}</div>`;
+      if(cell.note)inner+=`<div style="font-size:10px;color:var(--t3);font-style:italic;margin-top:4px;word-break:break-word">${cell.note}</div>`;
+      if(cell.swap){const sw=cell.swapWith?sbId(cell.swapWith):null;inner+=`<div style="font-size:10px;color:#818cf8;margin-top:3px">⇄ ${sw?'Covered: '+sw.name:'Swap req.'}</div>`;}
+    } else {
+      const isNxt=nxtP&&nxtP.week===wk&&nxtP.day===day;
+      inner+=`<div style="font-size:24px;color:${isNxt?'#63cab7':'var(--bdr2)'};text-align:center;margin-top:16px">${isNxt?'●':'+'}</div>`;
+    }
+    if(hasV)inner+=`<div style="position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:#f87171"></div>`;
+    card.innerHTML=inner;
+    card.addEventListener('click',()=>{if(pr)openCellModal(wk,day);else{activeCell={week:wk,day,slot:'primary'};render();}});
+    card.addEventListener('contextmenu',e=>{e.preventDefault();if(!pr&&cfg.showHolidays)toggleHoliday(wk,day);else openCellModal(wk,day);});
+    card.addEventListener('dragover',e=>{e.preventDefault();card.style.outline='2px solid #63cab7';});
+    card.addEventListener('dragleave',()=>card.style.outline='none');
+    card.addEventListener('drop',()=>{card.style.outline='none';if(dragId){activeCell={week:wk,day,slot:'primary'};assign(wk,day,dragId);}});
+    row.appendChild(card);
+  });
+  container.appendChild(row);
+}
+// ── AI Assistant ──────────────────────────────────────────────────────────────
+let geminiKey = '';
+let chatHistory = [];
+let aiOpen = false;
+
+function toggleAI(){
+  aiOpen = !aiOpen;
+  document.getElementById('aiPanel').classList.toggle('open', aiOpen);
+  document.getElementById('aiBtnTop').style.background = aiOpen ? 'rgba(167,139,250,.25)' : 'rgba(167,139,250,.1)';
+  // Show server warning if opened from file://
+  if(aiOpen && window.location.protocol==='file:'){
+    const w=document.getElementById('fileWarn');
+    if(w) w.style.display='block';
+  }
+}
+
+function setKey(){
+  const inp = document.getElementById('geminiKeyInput');
+  const val = (inp.value || '').trim();
+  if(!val){
+    document.getElementById('keyStatus').innerHTML = '<span style="color:#f87171">Please paste your key first</span>';
+    return;
+  }
+  geminiKey = val;
+  window._gkey = val; // belt-and-suspenders backup
+  inp.value = '';
+  inp.placeholder = '••••••• key stored in memory •••••••';
+  document.getElementById('keyStatus').innerHTML = '<span style="color:#34d399">✓ Key ready — ask your question below</span>';
+  document.getElementById('setKeyBtn').textContent = 'Update';
+  appendMsg('assistant', 'Key set! I have your full schedule in context. What would you like to know?');
+  document.getElementById('aiInput').focus();
+}
+
+function buildContext(){
+  const named = staff.filter(s=>s.name.trim());
+  const V = violations();
+  let ctx = `You are an expert hospital call scheduling assistant for a residency programme. Answer concisely and specifically based on the schedule data below. When suggesting changes, be concrete (name specific residents and days).
+
+CURRENT MONTH: ${MONTH_NAMES[viewM]} ${viewY}
+RULES: PGY 1-2 max ${cfg.max12} calls/month · PGY 3-5 max ${cfg.max35} calls/month · Max 1 weekend (Sat/Sun) per resident · PGY-5 must pair with junior (prefer PGY-2) · No back-to-back calls (min ${cfg.minGap} day gap) · Fri+Sat+Mon combo in same month = worst case (no post-call ×2 + academic day missed) · Fri/Sat = no post-call next day · Mon = resident misses academic teaching day
+
+STAFF ROSTER:\n`;
+  [1,2,3,4,5].forEach(pgy=>{
+    const grp=named.filter(s=>s.pgy===pgy);
+    if(grp.length) ctx+=`  ${PL[pgy]}: ${grp.map(s=>s.name).join(', ')}\n`;
+  });
+
+  ctx+=`\nSCHEDULE ASSIGNMENTS:\n`;
+  let hasAny=false;
+  WEEKS.forEach(w=>DAYS.forEach(d=>{
+    const c=getCell(w,d);
+    if(!c.primary)return;
+    hasAny=true;
+    const pr=sbId(c.primary),pa=c.pair?sbId(c.pair):null;
+    const ct=c.type?` [${c.type}]`:'';
+    const note=c.note?` (note: "${c.note}")`:'';
+    const swap=c.swap?` [SWAP${c.swapWith?` → covered by ${sbId(c.swapWith)?.name||'?'}`:' requested'}]`:'';
+    const isWknd=WEEKEND.includes(d)?` [WEEKEND]`:'';
+    const nopc=NO_PC.includes(d)?` [no post-call]`:'';
+    const acad=ACADEMIC.includes(d)?` [academic day]`:'';
+    ctx+=`  ${w} ${d}${isWknd}${nopc}${acad}: ${pr?.name} (${PL[pr?.pgy||1]})${pa?` paired with ${pa.name} (${PL[pa?.pgy||1]})`:''}${ct}${note}${swap}\n`;
+  }));
+  if(!hasAny) ctx+=`  (no assignments yet)\n`;
+
+  ctx+=`\nRESIDENT SUMMARY:\n`;
+  named.forEach(s=>{
+    const cells=resCells(s.id),wk=countWknd(s.id),mx=maxP(s.pgy);
+    const days=[...new Set(cells.map(c=>c.day))];
+    const fv=fairness(s.id);
+    const bl=Object.keys(avail).filter(k=>k.includes(s.id)).length>0;
+    ctx+=`  ${s.name} (${PL[s.pgy]}): ${cells.length}/${mx} calls · ${wk} weekend · days: [${days.join(', ')||'none'}]${fv!==null?` · fairness: ${fv>0?'+':''}${fv}%`:''}${bl?' · has availability blocks':''}\n`;
+  });
+
+  const empty=WEEKS.flatMap(w=>DAYS.filter(d=>!getCell(w,d).primary).map(d=>`${w} ${d}`));
+  ctx+=`\nEMPTY SLOTS (${empty.length}): ${empty.join(', ')||'none'}\n`;
+
+  if(V.length){
+    ctx+=`\nACTIVE VIOLATIONS:\n`;
+    V.forEach(v=>ctx+=`  [${v.type.toUpperCase()}] ${v.msg}\n`);
+  } else {
+    ctx+=`\nNo active violations.\n`;
+  }
+  return ctx;
+}
+
+function appendMsg(role, text, isLoading=false){
+  const msgs=document.getElementById('aiMsgs');
+  const div=document.createElement('div');
+  div.className=`ai-msg ${role}${isLoading?' loading':''}`;
+  if(isLoading){
+    div.id='aiLoading';
+    div.innerHTML='Thinking <span class="ai-dot">•</span><span class="ai-dot">•</span><span class="ai-dot">•</span>';
+  } else {
+    // Simple markdown: bold, line breaks
+    div.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function removeLoading(){
+  const el=document.getElementById('aiLoading');
+  if(el)el.remove();
+}
+
+
+// ── Schedule Tools (Gemini Function Calling) ─────────────────────────────────
+const SCHED_TOOLS = [{functionDeclarations:[
+  {name:'assign_call',description:'Assign a resident to a call slot. Use when asked to add, cover, or fill a shift.',
+   parameters:{type:'OBJECT',properties:{
+     week:{type:'STRING',description:'Week 1, Week 2, Week 3, or Week 4'},
+     day:{type:'STRING',description:'Mon Tue Wed Thu Fri Sat or Sun'},
+     residentName:{type:'STRING',description:'Full or partial name of the resident'},
+     slot:{type:'STRING',description:'primary pair or backup — default primary'}
+   },required:['week','day','residentName']}},
+  {name:'remove_call',description:'Remove/clear a resident from a call slot.',
+   parameters:{type:'OBJECT',properties:{
+     week:{type:'STRING'},day:{type:'STRING'},
+     slot:{type:'STRING',description:'primary pair backup or all — default primary'}
+   },required:['week','day']}},
+  {name:'swap_calls',description:'Swap the primary calls between two different slots.',
+   parameters:{type:'OBJECT',properties:{
+     week1:{type:'STRING'},day1:{type:'STRING'},
+     week2:{type:'STRING'},day2:{type:'STRING'}
+   },required:['week1','day1','week2','day2']}},
+  {name:'move_call',description:'Move a call (and its pair) from one slot to another empty slot.',
+   parameters:{type:'OBJECT',properties:{
+     fromWeek:{type:'STRING'},fromDay:{type:'STRING'},
+     toWeek:{type:'STRING'},toDay:{type:'STRING'}
+   },required:['fromWeek','fromDay','toWeek','toDay']}},
+  {name:'update_call_limit',description:'Change the max calls per month for a PGY group.',
+   parameters:{type:'OBJECT',properties:{
+     pgyGroup:{type:'STRING',description:'1-2 or 3-5'},
+     maxCalls:{type:'NUMBER'}
+   },required:['pgyGroup','maxCalls']}},
+  {name:'mark_unavailable',description:'Block a resident from being scheduled on a specific day.',
+   parameters:{type:'OBJECT',properties:{
+     residentName:{type:'STRING'},week:{type:'STRING'},day:{type:'STRING'}
+   },required:['residentName','week','day']}},
+  {name:'mark_holiday',description:'Mark a day as a named holiday.',
+   parameters:{type:'OBJECT',properties:{
+     week:{type:'STRING'},day:{type:'STRING'},name:{type:'STRING'}
+   },required:['week','day','name']}},
+  {name:'auto_fill_schedule',description:'Auto-fill all empty slots respecting all programme rules and fairness.',
+   parameters:{type:'OBJECT',properties:{}}},
+  {name:'get_violations',description:'Return a list of current schedule rule violations.',
+   parameters:{type:'OBJECT',properties:{}}}
+]}];
+
+function findRes(name){
+  const q=name.toLowerCase().replace(/^dr\.?\s*/,'');
+  return staff.find(s=>s.name.toLowerCase().replace(/^dr\.?\s*/,'').includes(q)||s.name.toLowerCase().includes(q));
+}
+function normWeek(w){return WEEKS.find(x=>x===w||x.toLowerCase()===w?.toLowerCase())||WEEKS.find(x=>x.replace('Week ','')===String(w));}
+function normDay(d){return DAYS.find(x=>x===d||x.toLowerCase()===d?.toLowerCase().slice(0,3))||DAYS.find(x=>x.toLowerCase().startsWith(d?.toLowerCase().slice(0,2)||''));}
+
+function execAction(name, args){
+  try{
+    switch(name){
+      case 'assign_call':{
+        const s=findRes(args.residentName);if(!s)return{ok:false,msg:'Resident "'+args.residentName+'" not found. Available: '+staff.filter(x=>x.name.trim()).map(x=>x.name).join(', ')};
+        const w=normWeek(args.week),d=normDay(args.day);
+        if(!w)return{ok:false,msg:'Week "'+args.week+'" not found'};
+        if(!d)return{ok:false,msg:'Day "'+args.day+'" not found'};
+        const slot=args.slot||'primary';
+        getCell(w,d)[slot]=s.id;save();render();
+        return{ok:true,msg:s.name+' assigned to '+w+' '+d+(slot!=='primary'?' ('+slot+')':'')};
+      }
+      case 'remove_call':{
+        const w=normWeek(args.week),d=normDay(args.day);
+        if(!w||!d)return{ok:false,msg:'Slot not found'};
+        const c=getCell(w,d),slot=args.slot||'primary';
+        if(slot==='all'){c.primary=null;c.pair=null;c.backup=null;}else c[slot]=null;
+        save();render();return{ok:true,msg:w+' '+d+' '+slot+' cleared'};
+      }
+      case 'swap_calls':{
+        const w1=normWeek(args.week1),d1=normDay(args.day1);
+        const w2=normWeek(args.week2),d2=normDay(args.day2);
+        if(!w1||!d1||!w2||!d2)return{ok:false,msg:'Could not find one or more slots'};
+        const c1=getCell(w1,d1),c2=getCell(w2,d2);
+        const tp=c1.primary;c1.primary=c2.primary;c2.primary=tp;
+        const tpa=c1.pair;c1.pair=c2.pair;c2.pair=tpa;
+        save();render();return{ok:true,msg:'Swapped '+w1+' '+d1+' with '+w2+' '+d2};
+      }
+      case 'move_call':{
+        const fw=normWeek(args.fromWeek),fd=normDay(args.fromDay);
+        const tw=normWeek(args.toWeek),td=normDay(args.toDay);
+        if(!fw||!fd||!tw||!td)return{ok:false,msg:'Slots not found'};
+        const fc=getCell(fw,fd),tc=getCell(tw,td);
+        tc.primary=fc.primary;tc.pair=fc.pair;tc.type=fc.type;tc.note=fc.note;
+        fc.primary=null;fc.pair=null;
+        save();render();return{ok:true,msg:'Moved call from '+fw+' '+fd+' to '+tw+' '+td};
+      }
+      case 'update_call_limit':{
+        const n=Number(args.maxCalls);
+        if(args.pgyGroup==='1-2')cfg.max12=n;else cfg.max35=n;
+        save();render();return{ok:true,msg:'PGY '+args.pgyGroup+' max calls updated to '+n+'/month'};
+      }
+      case 'mark_unavailable':{
+        const s=findRes(args.residentName);if(!s)return{ok:false,msg:'Resident not found'};
+        const w=normWeek(args.week),d=normDay(args.day);
+        if(!w||!d)return{ok:false,msg:'Slot not found'};
+        toggleBlock(s.id,w,d);
+        return{ok:true,msg:s.name+' marked unavailable on '+w+' '+d};
+      }
+      case 'mark_holiday':{
+        const w=normWeek(args.week),d=normDay(args.day);
+        if(!w||!d)return{ok:false,msg:'Slot not found'};
+        if(!allHolidays[hKey()])allHolidays[hKey()]={};
+        allHolidays[hKey()][w+'-'+d]=args.name;save();render();
+        return{ok:true,msg:w+' '+d+' marked as "'+args.name+'"'};
+      }
+      case 'auto_fill_schedule':autoFill();return{ok:true,msg:'Auto-fill completed'};
+      case 'get_violations':{
+        const V=violations();
+        return{ok:true,msg:V.length?V.map(v=>'['+v.type.toUpperCase()+'] '+v.msg).join('\n'):'No violations'};
+      }
+      default:return{ok:false,msg:'Unknown action: '+name};
+    }
+  }catch(e){return{ok:false,msg:'Error: '+e.message};}
+}
+
+async function sendAI(){
+  const key=geminiKey||window._gkey||'';
+  if(!key){appendMsg('assistant','Please paste your Gemini API key into the field above and click Set Key.');return;}
+  const inp=document.getElementById('aiInput');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  appendMsg('user',msg);
+  appendMsg('assistant','',true);
+  document.getElementById('aiSuggestions').style.display='none';
+
+  if(window.location.protocol==='file:'){
+    removeLoading();
+    appendMsg('assistant','Connection blocked. Please serve via local server:\\n\\ncd ~/Downloads && python3 -m http.server 8080\\n\\nThen open http://localhost:8080/call-scheduler.html');
+    return;
+  }
+
+  const sysPrompt=buildContext()+'\n\nYou can DIRECTLY MODIFY the schedule using the provided tools. When asked to make changes, use the tools immediately — do not just describe what you would do. You can chain multiple tool calls. After making changes, summarise clearly what was done and flag any rule violations created.';
+  let contents=[...chatHistory,{role:'user',parts:[{text:msg}]}];
+  const actionsTaken=[];
+
+  try{
+    for(let round=0;round<6;round++){
+      const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          systemInstruction:{parts:[{text:sysPrompt}]},
+          contents,
+          tools:SCHED_TOOLS,
+          toolConfig:{functionCallingConfig:{mode:'AUTO'}},
+          generationConfig:{temperature:0.2,maxOutputTokens:1200}
+        })
+      });
+      const data=await res.json();
+      if(data.error){removeLoading();appendMsg('assistant','API error ('+data.error.code+'): '+data.error.message+(data.error.code===403?' — check your API key':data.error.code===400?' — key may be invalid':''));return;}
+      const parts=data.candidates?.[0]?.content?.parts||[];
+      const funcCalls=parts.filter(p=>p.functionCall);
+      const textParts=parts.filter(p=>p.text);
+
+      if(funcCalls.length>0){
+        const funcResults=[];
+        funcCalls.forEach(p=>{
+          const result=execAction(p.functionCall.name,p.functionCall.args);
+          actionsTaken.push({name:p.functionCall.name,args:p.functionCall.args,result});
+          funcResults.push({functionResponse:{name:p.functionCall.name,response:result}});
+        });
+        contents.push({role:'model',parts});
+        contents.push({role:'user',parts:funcResults});
+      } else {
+        removeLoading();
+        const reply=(textParts.map(p=>p.text).join('\n')||'Done.').trim();
+        let display=reply;
+        if(actionsTaken.length>0){
+          const ok=actionsTaken.filter(a=>a.result.ok);
+          const fail=actionsTaken.filter(a=>!a.result.ok);
+          let summary='';
+          if(ok.length)summary+='**'+ok.length+' change'+(ok.length>1?'s':'')+' made:**\n'+ok.map(a=>'  ✓ '+a.result.msg).join('\n');
+          if(fail.length)summary+='\n**'+fail.length+' failed:**\n'+fail.map(a=>'  ✕ '+a.result.msg).join('\n');
+          display=summary+'\n\n'+reply;
+        }
+        appendMsg('assistant',display);
+        chatHistory.push({role:'user',parts:[{text:msg}]});
+        chatHistory.push({role:'model',parts:[{text:reply}]});
+        if(chatHistory.length>20)chatHistory=chatHistory.slice(-20);
+        return;
+      }
+    }
+    removeLoading();appendMsg('assistant','Changes applied.');
+  }catch(e){
+    removeLoading();
+    appendMsg('assistant',window.location.protocol==='file:'?'Connection blocked — please use local server (see above).':'Connection error: '+e.message);
+  }
+}
+
+function aiKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function askSuggestion(btn){document.getElementById('aiInput').value=btn.textContent;sendAI();}
+
+// ── Undo / Redo ───────────────────────────────────────────────────────────────
+const UNDO_LIMIT = 40;
+let undoStack = [];
+let redoStack = [];
+let _suppressSnapshot = false;
+
+function snapshot(){
+  if(_suppressSnapshot) return;
+  const availArr = {};
+  for(const k in avail){ availArr[k] = Array.from(avail[k] instanceof Set ? avail[k] : new Set(avail[k])); }
+  const state = JSON.stringify({allSched, availArr, allHolidays, allStatus});
+  if(undoStack.length && undoStack[undoStack.length-1] === state) return;
+  undoStack.push(state);
+  if(undoStack.length > UNDO_LIMIT) undoStack.shift();
+  redoStack = [];
+  updateUndoBtn();
+}
+
+function restoreState(state){
+  _suppressSnapshot = true;
+  try{
+    const p = JSON.parse(state);
+    allSched = p.allSched;
+    allHolidays = p.allHolidays;
+    allStatus = p.allStatus;
+    avail = {};
+    for(const k in p.availArr){ avail[k] = new Set(p.availArr[k]); }
+    save();
+    render();
+  } finally { _suppressSnapshot = false; }
+}
+
+function undo(){
+  if(undoStack.length < 2) return;
+  const current = undoStack.pop();
+  redoStack.push(current);
+  restoreState(undoStack[undoStack.length-1]);
+  updateUndoBtn();
+}
+
+function redo(){
+  if(!redoStack.length) return;
+  const next = redoStack.pop();
+  undoStack.push(next);
+  restoreState(next);
+  updateUndoBtn();
+}
+
+function updateUndoBtn(){
+  const ub = document.getElementById('undoBtn');
+  const rb = document.getElementById('redoBtn');
+  if(ub) ub.style.opacity = undoStack.length >= 2 ? '1' : '0.35';
+  if(rb) rb.style.opacity = redoStack.length > 0 ? '1' : '0.35';
+}
+
+document.addEventListener('keydown', e => {
+  if((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey){
+    if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+    e.preventDefault(); undo();
+  }
+  if((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))){
+    if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+    e.preventDefault(); redo();
+  }
+});
+
+// ── Google Drive Sync ─────────────────────────────────────────────────────────
+const GDRIVE_FILENAME = 'call-schedule-data.json';
+let gdriveToken = null;
+let gdriveFileId = null;
+let gdriveClientId = '';
+
+function openDriveModal(){
+  document.getElementById('mDrive').classList.add('open');
+  const saved = localStorage.getItem('rcs_gcid');
+  if(saved){ gdriveClientId = saved; const el = document.getElementById('gClientId'); if(el) el.value = saved; }
+  const savedFid = localStorage.getItem('rcs_gfid');
+  if(savedFid && !gdriveFileId) gdriveFileId = savedFid;
+  updateDriveBtns();
+  const ts = document.getElementById('gTokenStatus');
+  if(ts){ ts.textContent = gdriveToken ? '✓ Signed in to Google' : 'Not signed in'; ts.style.color = gdriveToken ? '#34d399' : '#94a3b8'; }
+}
+
+function saveClientId(){
+  const val = (document.getElementById('gClientId')?.value || '').trim();
+  if(!val){ alert('Please enter your Google OAuth Client ID.'); return; }
+  gdriveClientId = val;
+  localStorage.setItem('rcs_gcid', val);
+  const ts = document.getElementById('gTokenStatus');
+  if(ts){ ts.textContent = 'Client ID saved. Click Sign In.'; ts.style.color = '#63cab7'; }
+}
+
+function gdriveSignIn(){
+  if(!gdriveClientId){ alert('Enter your Client ID first and click Save.'); return; }
+  const redirect = window.location.href.split('?')[0].split('#')[0];
+  const params = new URLSearchParams({
+    client_id: gdriveClientId,
+    redirect_uri: redirect,
+    response_type: 'token',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    include_granted_scopes: 'true',
+    state: 'gdrive_auth'
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+}
+
+function checkGdriveCallback(){
+  const hash = window.location.hash;
+  if(!hash) return;
+  const params = new URLSearchParams(hash.slice(1));
+  const token = params.get('access_token');
+  const state = params.get('state');
+  if(token && state === 'gdrive_auth'){
+    gdriveToken = token;
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    updateDriveBtns();
+    const ts = document.getElementById('gTokenStatus');
+    if(ts){ ts.textContent = '✓ Signed in to Google'; ts.style.color = '#34d399'; }
+    alert('Signed in to Google Drive successfully! You can now save and load your schedule.');
+  }
+}
+
+function updateDriveBtns(){
+  const savBtn = document.getElementById('gdriveSaveBtn');
+  const ldBtn = document.getElementById('gdriveLoadBtn');
+  if(savBtn){ savBtn.disabled = !gdriveToken; savBtn.style.opacity = gdriveToken ? '1' : '0.5'; }
+  if(ldBtn){ ldBtn.disabled = !gdriveToken; ldBtn.style.opacity = gdriveToken ? '1' : '0.5'; }
+}
+
+async function gdriveSave(){
+  if(!gdriveToken){ alert('Please sign in to Google Drive first.'); return; }
+  const sb = document.getElementById('gdriveSyncStatus');
+  if(sb){ sb.textContent = 'Saving…'; sb.style.color = '#63cab7'; }
+  const availArr = {};
+  for(const k in avail){ availArr[k] = Array.from(avail[k] instanceof Set ? avail[k] : new Set(avail[k])); }
+  const data = JSON.stringify({staff,cfg,allSched,avail:availArr,allStatus,allHolidays,viewY,viewM,isDark,savedAt:new Date().toISOString()});
+  try {
+    if(!gdriveFileId){
+      const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILENAME}'+and+trashed=false&fields=files(id,name)`,
+        {headers:{Authorization:'Bearer '+gdriveToken}});
+      if(search.status===401){gdriveToken=null;updateDriveBtns();if(sb){sb.textContent='Session expired. Please sign in again.';sb.style.color='#f87171';}return;}
+      const sData = await search.json();
+      if(sData.files && sData.files.length > 0) gdriveFileId = sData.files[0].id;
+    }
+    if(gdriveFileId){
+      const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gdriveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:'Bearer '+gdriveToken,'Content-Type':'application/json'},body:data});
+      if(!res.ok){if(res.status===404){gdriveFileId=null;return gdriveSave();}throw new Error('Update failed: '+res.status);}
+    } else {
+      const meta = new Blob([JSON.stringify({name:GDRIVE_FILENAME,mimeType:'application/json'})],{type:'application/json'});
+      const file = new Blob([data],{type:'application/json'});
+      const form = new FormData();form.append('metadata',meta);form.append('file',file);
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+        {method:'POST',headers:{Authorization:'Bearer '+gdriveToken},body:form});
+      if(!res.ok) throw new Error('Create failed: '+res.status);
+      const created = await res.json();
+      gdriveFileId = created.id;
+      localStorage.setItem('rcs_gfid', gdriveFileId);
+    }
+    if(sb){ sb.textContent = '✓ Saved to Google Drive at '+new Date().toLocaleTimeString(); sb.style.color = '#34d399'; }
+  } catch(e){
+    if(sb){ sb.textContent = '✕ Save failed: '+e.message; sb.style.color = '#f87171'; }
+  }
+}
+
+async function gdriveLoad(){
+  if(!gdriveToken){ alert('Please sign in to Google Drive first.'); return; }
+  const sb = document.getElementById('gdriveSyncStatus');
+  if(sb){ sb.textContent = 'Loading…'; sb.style.color = '#63cab7'; }
+  try {
+    const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILENAME}'+and+trashed=false&fields=files(id,name,modifiedTime)`,
+      {headers:{Authorization:'Bearer '+gdriveToken}});
+    if(search.status===401){gdriveToken=null;updateDriveBtns();if(sb){sb.textContent='Session expired. Please sign in again.';sb.style.color='#f87171';}return;}
+    const sData = await search.json();
+    if(!sData.files || !sData.files.length){
+      if(sb){ sb.textContent = 'No saved schedule found in Drive. Save one first.'; sb.style.color = '#fbbf24'; }
+      return;
+    }
+    gdriveFileId = sData.files[0].id;
+    localStorage.setItem('rcs_gfid', gdriveFileId);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${gdriveFileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+gdriveToken}});
+    if(!res.ok) throw new Error('Download failed: '+res.status);
+    const p = await res.json();
+    snapshot();
+    if(p.staff) staff=p.staff;
+    if(p.cfg) cfg=p.cfg;
+    if(p.allSched) allSched=p.allSched;
+    if(p.avail){avail={};for(const k in p.avail){avail[k]=new Set(Array.isArray(p.avail[k])?p.avail[k]:Object.values(p.avail[k]||{}));}}
+    if(p.allStatus) allStatus=p.allStatus;
+    if(p.allHolidays) allHolidays=p.allHolidays;
+    if(p.viewY) viewY=p.viewY;
+    if(typeof p.viewM==='number') viewM=p.viewM;
+    if(typeof p.isDark==='boolean') isDark=p.isDark;
+    save(); applyFeatureFlags(); renderSettingToggles(); render();
+    const modified = sData.files[0].modifiedTime ? ' (saved '+new Date(sData.files[0].modifiedTime).toLocaleString()+')' : '';
+    if(sb){ sb.textContent = '✓ Loaded from Google Drive'+modified; sb.style.color = '#34d399'; }
+  } catch(e){
+    if(sb){ sb.textContent = '✕ Load failed: '+e.message; sb.style.color = '#f87171'; }
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+load();
+applyFeatureFlags();
+renderSettingToggles();
+if(cfg.fontScale&&cfg.fontScale!==1.0){document.body.style.transform='scale('+cfg.fontScale+')';document.body.style.transformOrigin='top left';document.body.style.width=(100/cfg.fontScale)+'%';}
+Object.keys(avail).forEach(k=>{if(!(avail[k] instanceof Set))avail[k]=new Set(Object.values(avail[k])||[]);});
+render();
+// Take initial snapshot so first undo returns to loaded state
+snapshot();
+// Check if returning from Google OAuth redirect
+checkGdriveCallback();
+</script>
+</body>
+</html>
