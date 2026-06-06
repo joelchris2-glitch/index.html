@@ -70,7 +70,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
 </head>
 <body>
 
-<!-- ── MODALS ──────────────────────────────────────────── -->
 <div class="ov" id="mStaff" onclick="closeM('mStaff')">
  <div class="mbox" style="max-width:540px" onclick="event.stopPropagation()">
   <div class="mhdr">
@@ -192,7 +191,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
  </div>
 </div>
 
-<!-- ── GOOGLE DRIVE MODAL ───────────────────────────────── -->
 <div class="ov" id="mDrive" onclick="closeM('mDrive')">
  <div class="mbox" style="max-width:480px" onclick="event.stopPropagation()">
   <div class="mhdr">
@@ -232,20 +230,17 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
  </div>
 </div>
 
-<!-- ── TOP BAR ─────────────────────────────────────────── -->
 <div id="topbar" style="padding:0 24px">
  <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;padding-bottom:6px;flex-wrap:wrap;gap:8px">
   <div>
    <div style="font-size:9px;letter-spacing:.28em;color:var(--t5);text-transform:uppercase;margin-bottom:2px">Overnight · On-Call Planner</div>
    <h1 style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(90deg,#93c5fd,#63cab7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Residency Call Schedule</h1>
   </div>
-  <!-- Month nav -->
   <div style="display:flex;align-items:center;gap:8px">
    <button onclick="prevMonth()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:5px 10px;font-size:13px">‹</button>
    <div id="monthLabel" style="font-size:12px;color:var(--t1);min-width:110px;text-align:center;letter-spacing:.05em"></div>
    <button onclick="nextMonth()" style="background:var(--bg3);border:1px solid var(--bdr2);color:var(--t2);border-radius:6px;padding:5px 10px;font-size:13px">›</button>
   </div>
-  <!-- Action buttons -->
   <div class="tb-btns no-print" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
    <button onclick="openM('mStaff')" style="background:rgba(147,197,253,.08);border:1px solid rgba(147,197,253,.2);color:#93c5fd;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⊕ ROSTER</button>
    <button onclick="openM('mRules')" style="background:rgba(99,202,183,.08);border:1px solid rgba(99,202,183,.2);color:#63cab7;border-radius:7px;padding:6px 12px;font-size:10px;letter-spacing:.07em">⚙ RULES</button>
@@ -291,7 +286,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
 </div>
 
 <div id="aiPanel">
- <!-- Header -->
  <div style="padding:14px 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
    <div>
@@ -300,7 +294,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
    </div>
    <button onclick="toggleAI()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>
   </div>
-  <!-- Key input -->
   <div id="keySection">
    <div style="font-size:9px;color:var(--t4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Gemini API Key</div>
    <div style="display:flex;gap:6px">
@@ -315,7 +308,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
   <code style="background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;font-size:10px;display:inline-block;margin-top:3px">cd ~/Downloads && python3 -m http.server 8080</code><br>
   Then open <strong>http://localhost:8080/call-scheduler.html</strong>
  </div>
- <!-- Suggested prompts -->
  <div id="aiSuggestions" style="padding:10px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;display:flex;flex-wrap:wrap;gap:5px">
   <div style="font-size:9px;color:var(--t4);width:100%;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Try asking</div>
   <button class="ai-sug" onclick="askSuggestion(this)">Fix all current violations</button>
@@ -327,11 +319,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:14px;b
   <button class="ai-sug" onclick="askSuggestion(this)">Block Dr. [Name] on Week 4 Friday</button>
   <button class="ai-sug" onclick="askSuggestion(this)">Draft schedule summary email</button>
  </div>
- <!-- Messages -->
  <div id="aiMsgs">
   <div class="ai-msg assistant">Hi! I can both answer questions AND directly modify your schedule. Try: "Dr. Chen is sick Week 2 Monday — reassign it" or "Fix all current violations" or "Change PGY 1-2 max to 5 calls". I'll use tools to make the changes live.</div>
  </div>
- <!-- Input -->
  <div style="border-top:1px solid var(--bdr);flex-shrink:0;position:relative">
   <textarea id="aiInput" placeholder="Ask about your schedule..." onkeydown="aiKeyDown(event)"></textarea>
   <button onclick="sendAI()" style="position:absolute;right:10px;bottom:12px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;padding:5px 11px;font-size:11px">Send ↑</button>
@@ -374,6 +364,14 @@ let tmpMD=1,tmpWK=true,tmpQ3=false,tmpBK=false,tmpStaff=[];
 let cellEditKey=null; // "Week1-Mon" being edited in cell modal
 let isDark=true;
 
+// Features State
+let geminiKey = '';
+let chatHistory = [];
+let aiOpen = false;
+
+// Undo/redo stacks — declared here so snapshot() can be safely called anywhere
+let undoStack=[],redoStack=[],_suppressSnapshot=false;
+
 // ── Persistence ───────────────────────────────────────────────────────────────
 function save(){
   try{
@@ -388,7 +386,7 @@ function load(){
     if(!d)return;
     const p=JSON.parse(d);
     if(p.staff)staff=p.staff;
-    if(p.cfg)cfg=p.cfg;
+    if(p.cfg)cfg=Object.assign(cfg,p.cfg);
     if(p.allSched)allSched=p.allSched;
     if(p.avail){
       avail={};
@@ -426,12 +424,11 @@ function blocked(sid,week,day){
   return (avail[k]||new Set()).has(week+'-'+day);
 }
 function toggleBlock(sid,week,day){
-  snapshot();
   const k=monthKey(viewY,viewM)+'-'+sid;
   if(!avail[k])avail[k]=new Set();
   const key=week+'-'+day;
   if(avail[k].has(key))avail[k].delete(key);else avail[k].add(key);
-  save();render();
+  save(); snapshot(); render();
 }
 
 function resCells(sid){
@@ -450,15 +447,17 @@ function hKey(){return monthKey(viewY,viewM);}
 function isHoliday(w,d){const h=allHolidays[hKey()];return h&&h[w+'-'+d]!==undefined;}
 function holidayName(w,d){const h=allHolidays[hKey()];return h?h[w+'-'+d]||null:null;}
 function toggleHoliday(w,d){
-  snapshot();
   if(!allHolidays[hKey()])allHolidays[hKey()]={};
   const key=w+'-'+d;
   if(allHolidays[hKey()][key]!==undefined){delete allHolidays[hKey()][key];}
   else{const name=prompt('Holiday name (e.g. Christmas Day):','Holiday');if(name!==null)allHolidays[hKey()][key]=name;}
-  save();render();
+  save(); snapshot(); render();
 }
 function getStatus(){return allStatus[monthKey(viewY,viewM)]||'draft';}
-function toggleStatus(){allStatus[monthKey(viewY,viewM)]=getStatus()==='draft'?'published':'draft';save();render();}
+function toggleStatus(){
+  allStatus[monthKey(viewY,viewM)]=getStatus()==='draft'?'published':'draft';
+  save(); snapshot(); render();
+}
 function nextEmptyPrimary(week,day){
   let wi=WEEKS.indexOf(week),di=DAYS.indexOf(day)+1;
   while(wi<WEEKS.length){while(di<DAYS.length){if(!getCell(WEEKS[wi],DAYS[di]).primary)return{week:WEEKS[wi],day:DAYS[di]};di++;}wi++;di=0;}
@@ -538,7 +537,6 @@ function pickBest(pool,day){
 }
 
 function autoFill(){
-  snapshot();
   let filled=0;
   WEEKS.forEach((w,wi)=>DAYS.forEach((d,di)=>{
     const c=getCell(w,d);if(c.primary)return;
@@ -552,22 +550,29 @@ function autoFill(){
       const pair=pickBest(jp,d);if(pair){c.pair=pair.id;filled++;}
     }
   }));
-  save();render();
+  save(); snapshot(); render();
   if(filled===0)alert('No empty slots could be filled — check that residents have remaining call capacity and are not blocked.');
 }
 
-function clearSched(){if(!confirm('Clear the entire schedule for this month?'))return;snapshot();WEEKS.forEach(w=>DAYS.forEach(d=>{getCurSched()[w][d]={primary:null,pair:null,type:'',note:'',swap:false,swapWith:''};})  );save();render();}
+function clearSched(){
+  if(!confirm('Clear the entire schedule for this month?'))return;
+  WEEKS.forEach(w=>DAYS.forEach(d=>{getCurSched()[w][d]={primary:null,pair:null,backup:null,type:'',note:'',swap:false,swapWith:''};}));
+  save(); snapshot(); render();
+}
 
 // ── Assignment ─────────────────────────────────────────────────────────────────
 function assign(week,day,sid){
-  snapshot();
   const c=getCell(week,day);
   const slot=activeCell?.week===week&&activeCell?.day===day?activeCell.slot:'primary';
   if(slot==='pair'){c.pair=sid;const n=nextEmptyPrimary(week,day);activeCell=n?{week:n.week,day:n.day,slot:'primary'}:null;}
   else{c.primary=sid;c.pair=null;const s=sbId(sid);if(s&&s.pgy===5)activeCell={week,day,slot:'pair'};else{const n=nextEmptyPrimary(week,day);activeCell=n?{week:n.week,day:n.day,slot:'primary'}:null;}}
-  save();render();
+  save(); snapshot(); render();
 }
-function clearC(week,day,slot){snapshot();const c=getCell(week,day);if(slot==='pair')c.pair=null;else{c.primary=null;c.pair=null;}save();render();}
+function clearC(week,day,slot){
+  const c=getCell(week,day);
+  if(slot==='pair')c.pair=null;else{c.primary=null;c.pair=null;}
+  save(); snapshot(); render();
+}
 
 // ── Month nav ──────────────────────────────────────────────────────────────────
 function prevMonth(){viewM--;if(viewM<0){viewM=11;viewY--;}save();render();}
@@ -601,6 +606,7 @@ function render(){
   applyFeatureFlags();
   document.documentElement.dataset.theme=isDark?'dark':'light';
   document.getElementById('themBtn').textContent=isDark?'☀':'☾';
+  updateUndoBtn();updateFontBtns();updateViewBtns();
   renderBanner();renderSidebar();renderGrid();renderViol();renderSum();renderAvail();if(curTab==='resident')renderResident();
 }
 
@@ -794,7 +800,7 @@ function renderGrid(){
           bkDiv.innerHTML='<div style="width:4px;height:4px;border-radius:50%;background:'+PC[bks.pgy]+'"></div><span style="font-size:8px;color:'+PC[bks.pgy]+'">'+bks.name.replace(/^Dr\.\s*/,'')+'</span>';
           const xbk=document.createElement('button');xbk.style.cssText='position:absolute;bottom:2px;right:3px;background:none;border:none;color:'+T4()+';font-size:10px;line-height:1;padding:0';
           xbk.textContent='×';xbk.onmouseover=()=>xbk.style.color='#f87171';xbk.onmouseout=()=>xbk.style.color=T4();
-          xbk.onclick=e=>{e.stopPropagation();cell.backup=null;save();render();};
+          xbk.onclick=e=>{e.stopPropagation();cell.backup=null;save();snapshot();render();};
           div.appendChild(bkDiv);div.appendChild(xbk);
         } else {
           const bkSlot=document.createElement('div');
@@ -802,7 +808,7 @@ function renderGrid(){
           bkSlot.innerHTML='<span style="font-size:7px;color:'+T4()+'">+ backup</span>';
           bkSlot.onclick=e=>{e.stopPropagation();activeCell={week,day,slot:'backup'};render();};
           bkSlot.ondragover=e=>{e.preventDefault();bkSlot.style.background=PC[4]+'20';};
-          bkSlot.ondrop=e=>{e.stopPropagation();if(dragId){cell.backup=dragId;save();render();}};
+          bkSlot.ondrop=e=>{e.stopPropagation();if(dragId){cell.backup=dragId;save();snapshot();render();}};
           div.appendChild(bkSlot);
         }
       }
@@ -1019,13 +1025,12 @@ function openCellModal(week,day){
 
 function saveCellDetails(){
   if(!cellEditKey)return;
-  snapshot();
   const{week,day}=cellEditKey;const c=getCell(week,day);
   c.note=document.getElementById('cellNote')?.value||'';
   c.swap=document.getElementById('swapTgl')?.style.background==='#818cf8';
   c.swapWith=document.getElementById('covSel')?.value||'';
   // type saved on click
-  save();closeM('mCell');render();
+  save(); snapshot(); closeM('mCell'); render();
 }
 
 // ── Settings modals ────────────────────────────────────────────────────────────
@@ -1059,7 +1064,17 @@ function renderSM(){
   });
   const add=document.createElement('button');add.className='btn-g';add.style.cssText='width:100%;margin-top:4px;border-style:dashed;font-size:11px;padding:8px';add.textContent='+ Add Resident';add.onclick=()=>{tmpStaff.push({id:mkId(),name:'',pgy:1});renderSM();};body.appendChild(add);
 }
-function saveStaff(){staff=tmpStaff.filter(s=>s.name.trim());const ids=new Set(staff.map(s=>s.id));WEEKS.forEach(w=>DAYS.forEach(d=>{const c=getCell(w,d);if(c.primary&&!ids.has(c.primary)){c.primary=null;c.pair=null;}else if(c.pair&&!ids.has(c.pair))c.pair=null;}));save();closeM('mStaff');render();}
+
+function saveStaff(){
+  staff=tmpStaff.filter(s=>s.name.trim()).map(s=>({...s}));
+  const ids=new Set(staff.map(s=>s.id));
+  WEEKS.forEach(w=>DAYS.forEach(d=>{
+    const c=getCell(w,d);
+    if(c.primary&&!ids.has(c.primary)){c.primary=null;c.pair=null;}
+    else if(c.pair&&!ids.has(c.pair))c.pair=null;
+  }));
+  save(); snapshot(); closeM('mStaff'); render();
+}
 
 function setSTab(t){
   ['rules','features','interface'].forEach(s=>{
@@ -1102,7 +1117,8 @@ function renderSettingToggles(){
 function applyFeatureFlags(){
   const show=(id,vis)=>{const el=document.getElementById(id);if(el)el.style.display=vis?'':'none';};
   show('aiBtnTop',cfg.showAI);
-  show('aiPanel',cfg.showAI&&aiOpen);
+  // AI panel uses CSS .open class for show/hide — do not override with display style
+  if(!cfg.showAI && aiOpen){ aiOpen=false; document.getElementById('aiPanel')?.classList.remove('open'); }
   // Auto-fill button
   const afBtn=document.querySelector('button[onclick="autoFill()"]');
   if(afBtn)afBtn.style.display=cfg.showAutoFill?'':'none';
@@ -1203,7 +1219,6 @@ function applyPattern(){
   const startWk=document.getElementById('patWk')?.value||WEEKS[0];
   const startDay=document.getElementById('patDay')?.value||DAYS[0];
   if(!sid){alert('Please select a resident');return;}
-  snapshot();
   let cursor=WEEKS.indexOf(startWk)*7+DAYS.indexOf(startDay);
   let filled=0;
   while(cursor<WEEKS.length*7){
@@ -1214,7 +1229,7 @@ function applyPattern(){
     }
     cursor+=interval;
   }
-  save();closeM('mPattern');render();
+  save(); snapshot(); closeM('mPattern'); render();
   if(filled===0)alert('No slots could be filled with this pattern.');
 }
 
@@ -1296,15 +1311,15 @@ function updateFontBtns(){
     if(b){const on=Math.abs(cfg.fontScale-parseFloat(s))<0.01;b.style.background=on?'rgba(99,202,183,.2)':'var(--bg3)';b.style.color=on?'#63cab7':'var(--t2)';b.style.borderColor=on?'#63cab7':'var(--bdr2)';}
   });
 }
-
-// ── View Mode ─────────────────────────────────────────────────────────────────
-function setViewMode(mode){cfg.viewMode=mode;save();renderGrid();updateViewBtns();}
 function updateViewBtns(){
   ['month','week'].forEach(m=>{
     const b=document.getElementById('vm-'+m);
     if(b){const on=cfg.viewMode===m;b.style.background=on?'rgba(99,202,183,.15)':'var(--bg3)';b.style.color=on?'#63cab7':'var(--t2)';b.style.borderColor=on?'#63cab7':'var(--bdr2)';}
   });
 }
+
+// ── View Mode ─────────────────────────────────────────────────────────────────
+function setViewMode(mode){cfg.viewMode=mode;save();renderGrid();updateViewBtns();}
 function prevViewWeek(){if(cfg.viewWeek>0){cfg.viewWeek--;save();renderGrid();}}
 function nextViewWeek(){if(cfg.viewWeek<WEEKS.length-1){cfg.viewWeek++;save();renderGrid();}}
 
@@ -1379,7 +1394,7 @@ function loadProvinceHolidays(){
     const key=week+'-'+dayName;
     allHolidays[hKey()][key]=h.n;loaded++;
   });
-  save();render();
+  save(); snapshot(); render();
   alert('Loaded '+loaded+' '+cfg.province+' holiday'+(loaded!==1?'s':'')+' for '+MONTH_NAMES[viewM]+' '+viewY+'.');
 }
 
@@ -1441,10 +1456,6 @@ function renderWeekView(container,nxtP,vCells){
   container.appendChild(row);
 }
 // ── AI Assistant ──────────────────────────────────────────────────────────────
-let geminiKey = '';
-let chatHistory = [];
-let aiOpen = false;
-
 function toggleAI(){
   aiOpen = !aiOpen;
   document.getElementById('aiPanel').classList.toggle('open', aiOpen);
@@ -1573,7 +1584,7 @@ const SCHED_TOOLS = [{functionDeclarations:[
   {name:'update_call_limit',description:'Change the max calls per month for a PGY group.',
    parameters:{type:'OBJECT',properties:{
      pgyGroup:{type:'STRING',description:'1-2 or 3-5'},
-     maxCalls:{type:'NUMBER'}
+     maxCalls:{type:'INTEGER'}
    },required:['pgyGroup','maxCalls']}},
   {name:'mark_unavailable',description:'Block a resident from being scheduled on a specific day.',
    parameters:{type:'OBJECT',properties:{
@@ -1708,6 +1719,7 @@ async function sendAI(){
           actionsTaken.push({name:p.functionCall.name,args:p.functionCall.args,result});
           funcResults.push({functionResponse:{name:p.functionCall.name,response:result}});
         });
+        snapshot(); // Save the state AFTER all AI modifications
         contents.push({role:'model',parts});
         contents.push({role:'user',parts:funcResults});
       } else {
@@ -1741,9 +1753,6 @@ function askSuggestion(btn){document.getElementById('aiInput').value=btn.textCon
 
 // ── Undo / Redo ───────────────────────────────────────────────────────────────
 const UNDO_LIMIT = 40;
-let undoStack = [];
-let redoStack = [];
-let _suppressSnapshot = false;
 
 function snapshot(){
   if(_suppressSnapshot) return;
@@ -1857,7 +1866,14 @@ function checkGdriveCallback(){
     updateDriveBtns();
     const ts = document.getElementById('gTokenStatus');
     if(ts){ ts.textContent = '✓ Signed in to Google'; ts.style.color = '#34d399'; }
-    alert('Signed in to Google Drive successfully! You can now save and load your schedule.');
+    
+    // Check if they were trying to save before the token expired
+    if(sessionStorage.getItem('pending_gdrive_save')) {
+        sessionStorage.removeItem('pending_gdrive_save');
+        gdriveSave(); // Automatically resume the save
+    } else {
+        alert('Signed in to Google Drive successfully! You can now save and load your schedule.');
+    }
   }
 }
 
@@ -1879,7 +1895,13 @@ async function gdriveSave(){
     if(!gdriveFileId){
       const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILENAME}'+and+trashed=false&fields=files(id,name)`,
         {headers:{Authorization:'Bearer '+gdriveToken}});
-      if(search.status===401){gdriveToken=null;updateDriveBtns();if(sb){sb.textContent='Session expired. Please sign in again.';sb.style.color='#f87171';}return;}
+      if(search.status===401){
+          gdriveToken=null;
+          updateDriveBtns();
+          sessionStorage.setItem('pending_gdrive_save', 'true'); // Save intent
+          if(sb){sb.textContent='Session expired. Please sign in again to resume saving.';sb.style.color='#f87171';}
+          return;
+      }
       const sData = await search.json();
       if(sData.files && sData.files.length > 0) gdriveFileId = sData.files[0].id;
     }
@@ -1923,9 +1945,9 @@ async function gdriveLoad(){
       {headers:{Authorization:'Bearer '+gdriveToken}});
     if(!res.ok) throw new Error('Download failed: '+res.status);
     const p = await res.json();
-    snapshot();
+    
     if(p.staff) staff=p.staff;
-    if(p.cfg) cfg=p.cfg;
+    if(p.cfg) cfg=Object.assign(cfg,p.cfg);
     if(p.allSched) allSched=p.allSched;
     if(p.avail){avail={};for(const k in p.avail){avail[k]=new Set(Array.isArray(p.avail[k])?p.avail[k]:Object.values(p.avail[k]||{}));}}
     if(p.allStatus) allStatus=p.allStatus;
@@ -1933,7 +1955,7 @@ async function gdriveLoad(){
     if(p.viewY) viewY=p.viewY;
     if(typeof p.viewM==='number') viewM=p.viewM;
     if(typeof p.isDark==='boolean') isDark=p.isDark;
-    save(); applyFeatureFlags(); renderSettingToggles(); render();
+    save(); snapshot(); applyFeatureFlags(); renderSettingToggles(); render();
     const modified = sData.files[0].modifiedTime ? ' (saved '+new Date(sData.files[0].modifiedTime).toLocaleString()+')' : '';
     if(sb){ sb.textContent = '✓ Loaded from Google Drive'+modified; sb.style.color = '#34d399'; }
   } catch(e){
